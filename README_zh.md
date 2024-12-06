@@ -29,27 +29,27 @@ Fork开发分支，并将PR提交到开发分支 :)
 
 ## 截图
 
-![工具包](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_toolkit.png?raw=true)
-![主页](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_home.png?raw=true)
-![网络](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_simplenetwork.png?raw=true)
-![扫描](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_simplescan.png?raw=true)
-![设置](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_simplesettings.png?raw=true)
-![短信](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_sms.png?raw=true)
-![控制台](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_console.png?raw=true)
-![设备信息](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/dev_deviceinfo.png?raw=true)
+![工具包](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_toolkit.png?raw=true)
+![主页](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_home.png?raw=true)
+![网络](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_simplenetwork.png?raw=true)
+![扫描](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_simplescan.png?raw=true)
+![设置](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_simplesettings.png?raw=true)
+![短信](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_sms.png?raw=true)
+![控制台](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_console.png?raw=true)
+![设备信息](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/dev_deviceinfo.png?raw=true)
 
 # 开发分支：以下命令将下载测试版/开发中的工具包
 
 ## 使用说明
 **运行工具包：**
- - 打开ADB & Fastboot++（参见[使用ADB](https://github.com/iamromulan/quectel-rgmii-configuration-notes?tab=readme-ov-file#unlocking-and-using-adb)）或直接使用adb
+ - 打开ADB & Fastboot++（参见[使用ADB](https://github.com/cachenow/quectel-rgmii-configuration-notes?tab=readme-ov-file#unlocking-and-using-adb)）或直接使用adb
  - 确保您的调制解调器通过USB连接到计算机
  - 运行`adb devices`确保adb检测到您的调制解调器
- - 运行`adb shell ping 8.8.8.8`确保shell可以访问互联网。如果出现错误，请确保调制解调器已连接到蜂窝网络，并确保已设置`AT+QMAPWAC=1`（参见故障排除部分：[无法从以太网端口获取互联网访问（常见）](https://github.com/iamromulan/quectel-rgmii-configuration-notes/tree/main?tab=readme-ov-file#i-cant-get-internet-access-from-the-ethernet-port-common)）
+ - 运行`adb shell ping 8.8.8.8`确保shell可以访问互联网。如果出现错误，请确保调制解调器已连接到蜂窝网络，并确保已设置`AT+QMAPWAC=1`（参见故障排除部分：[无法从以太网端口获取互联网访问（常见）](https://github.com/cachenow/quectel-rgmii-configuration-notes/tree/main?tab=readme-ov-file#i-cant-get-internet-access-from-the-ethernet-port-common)）
  - 如果没有错误，您应该会看到持续的回复，按`CTRL-C`停止
  - 只需将以下命令复制/粘贴到命令提示符/Shell中
 ```bash
-adb shell "cd /tmp && wget -O RMxxx_rgmii_toolkit.sh https://raw.githubusercontent.com/iamromulan/quectel-rgmii-toolkit/SDXLEMUR/RMxxx_rgmii_toolkit.sh && chmod +x RMxxx_rgmii_toolkit.sh && ./RMxxx_rgmii_toolkit.sh" && cd /
+adb shell "cd /tmp && wget -O RMxxx_rgmii_toolkit.sh https://raw.githubusercontent.com/cachenow/quectel-webui/main/RMxxx_rgmii_toolkit.sh && chmod +x RMxxx_rgmii_toolkit.sh && ./RMxxx_rgmii_toolkit.sh" && cd /
 ```
 
 **或者，如果您想在完成后保持在调制解调器的shell中**
@@ -59,10 +59,10 @@ adb shell
 ```
 然后运行
 ```
-cd /tmp && wget -O RMxxx_rgmii_toolkit.sh https://raw.githubusercontent.com/iamromulan/quectel-rgmii-toolkit/SDXLEMUR/RMxxx_rgmii_toolkit.sh && chmod +x RMxxx_rgmii_toolkit.sh && ./RMxxx_rgmii_toolkit.sh && cd /
+cd /tmp && wget -O RMxxx_rgmii_toolkit.sh https://raw.githubusercontent.com/cachenow/quectel-webui/main/RMxxx_rgmii_toolkit.sh && chmod +x RMxxx_rgmii_toolkit.sh && ./RMxxx_rgmii_toolkit.sh && cd /
 ```
 **您应该看到：**
-![工具包](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/iamromulantoolkit.png?raw=true)
+![工具包](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/iamromulantoolkit.png?raw=true)
 
 ## Tailscale安装和配置
 
@@ -70,13 +70,13 @@ cd /tmp && wget -O RMxxx_rgmii_toolkit.sh https://raw.githubusercontent.com/iamr
 ### 安装：
 打开工具包主菜单并**按4**进入Tailscale菜单
 
-![工具包](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/tailscalemenu.png?raw=true)
+![工具包](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/tailscalemenu.png?raw=true)
 
 **按1，等待安装完成。这对系统来说是一个很大的文件，所以需要一些时间。**
 
 **完成后，当显示Tailscale安装成功时，按2/回车进行配置。**
 
-![工具包](https://github.com/iamromulan/quectel-rgmii-configuration-notes/blob/main/images/tailscaleconfig.png?raw=true)
+![工具包](https://github.com/cachenow/quectel-rgmii-configuration-notes/blob/main/images/tailscaleconfig.png?raw=true)
 
 如果需要，可以通过**按1/回车**在端口8088上启用Tailscale Web UI，以便稍后从浏览器进行配置。
 

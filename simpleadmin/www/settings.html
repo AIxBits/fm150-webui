@@ -335,22 +335,25 @@
             <h5 class="card-title mb-0" data-i18n="Language">Language</h5>
           </div>
           <div class="card-body">
-            <div class="mb-3">
-              <label for="languageSelect" class="form-label" data-i18n="Select Language">Select Language</label>
-              <select 
-                id="languageSelect"
-                class="form-select" 
-                x-model="currentLanguage"
-                @change="changeLanguage($event.target.value)">
-                <template x-for="lang in languageOptions" :key="lang.code">
-                  <option :value="lang.code" x-text="lang.name"></option>
-                </template>
-              </select>
-            </div>
-            <div class="text-muted small">
-              <span data-i18n="Current Language">Current Language</span>: 
-              <span x-text="languageOptions.find(l => l.code === currentLanguage)?.name"></span>
-            </div>
+            <form @submit.prevent="saveLanguageSettings">
+              <div class="mb-3">
+                <label for="languageSelect" class="form-label" data-i18n="Select Language">Select Language</label>
+                <select 
+                  id="languageSelect"
+                  class="form-select" 
+                  x-model="selectedLanguage">
+                  <option value="en">English</option>
+                  <option value="zh">中文</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <button type="submit" class="btn btn-primary" data-i18n="Save Language">Save Language</button>
+              </div>
+              <div class="text-muted small">
+                <span data-i18n="Current Language">Current Language</span>: 
+                <span x-text="selectedLanguage === 'zh' ? '中文' : 'English'"></span>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -404,6 +407,9 @@
         </div>
       </div>
     </main>
+    <script src="js/i18n/en.js"></script>
+    <script src="js/i18n/zh.js"></script>
+    <script src="js/i18n/language-manager.js"></script>
     <script src="js/dark-mode.js"></script>
     <script>
       function simpleSettings() {
@@ -428,11 +434,7 @@
           usbNetMode: "Unspecified",
           currentUsbNetMode: "Unknown",
           DNSProxyStatus: true,
-          currentLanguage: '',
-          languageOptions: [
-            { code: 'en', name: 'English' },
-            { code: 'zh', name: '中文' }
-          ],
+          selectedLanguage: window.languageManager.getCurrentLanguage(),
 
           closeModal() {
             this.confirmModal = false;
@@ -692,18 +694,23 @@
           init() {
             this.fetchCurrentSettings();
             this.fetchTTL();
-            this.currentLanguage = window.languageManager.getCurrentLanguage();
+            this.selectedLanguage = window.languageManager.getCurrentLanguage();
+            
+            // 监听语言变化事件
+            window.addEventListener('languageChanged', (e) => {
+              this.selectedLanguage = e.detail.language;
+            });
+
           },
-          initLanguageSelector() {
-            const storedLanguage = localStorage.getItem('language');
-            if (storedLanguage) {
-              this.currentLanguage = storedLanguage;
+          saveLanguageSettings() {
+            if (this.selectedLanguage) {
+              window.languageManager.setLanguage(this.selectedLanguage);
+              // 显示保存成功提示
+              this.showSuccess = true;
+              setTimeout(() => {
+                this.showSuccess = false;
+              }, 2000);
             }
-          },
-          changeLanguage(lang) {
-            window.languageManager.setLanguage(lang);
-            this.currentLanguage = lang;
-            localStorage.setItem('language', lang);
           },
         };
       }

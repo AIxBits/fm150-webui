@@ -1,78 +1,79 @@
 class LanguageManager {
     constructor() {
-        // 首先尝试从localStorage获取用户设置的语言
-        // 如果没有，则使用浏览器语言
-        this.currentLang = localStorage.getItem('preferred_language') || this.getBrowserLanguage();
         this.translations = {
             'en': enTranslations,
             'zh': zhTranslations
         };
-        this.supportedLanguages = [
-            { code: 'en', name: 'English' },
-            { code: 'zh', name: '中文' }
-        ];
-        
-        // 初始化时更新页面内容
+        this.initializeLanguage();
+    }
+
+    initializeLanguage() {
+        const savedLang = localStorage.getItem('preferred_language');
+        if (savedLang && this.translations[savedLang]) {
+            this.currentLang = savedLang;
+        } else {
+            this.currentLang = this.getBrowserLanguage();
+            localStorage.setItem('preferred_language', this.currentLang);
+        }
+        document.documentElement.lang = this.currentLang;
         this.updatePageContent();
     }
 
     getBrowserLanguage() {
-        // 获取完整的浏览器语言设置
-        const fullLang = navigator.language.toLowerCase();
-        
-        // 检查是否是中文
-        if (fullLang.startsWith('zh')) {
-            return 'zh';
-        }
-        
-        // 其他所有语言默认使用英文
-        return 'en';
+        const fullLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+        return fullLang.startsWith('zh') ? 'zh' : 'en';
     }
 
     setLanguage(lang) {
         if (this.translations[lang]) {
             this.currentLang = lang;
-            // 保存到localStorage以便持久化
             localStorage.setItem('preferred_language', lang);
+            document.documentElement.lang = lang;
             this.updatePageContent();
+            window.dispatchEvent(new CustomEvent('languageChanged', {
+                detail: { language: lang }
+            }));
             return true;
         }
         return false;
     }
 
     translate(key) {
-        return this.translations[this.currentLang][key] || this.translations['en'][key] || key;
+        const translation = this.translations[this.currentLang][key];
+        return translation || this.translations['en'][key] || key;
     }
 
     updatePageContent() {
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
-            if (element.tagName === 'INPUT' && element.type === 'placeholder') {
-                element.placeholder = this.translate(key);
+            const translation = this.translate(key);
+            
+            if (element.tagName === 'INPUT' && element.getAttribute('type') === 'placeholder') {
+                element.placeholder = translation;
             } else {
-                element.textContent = this.translate(key);
+                element.textContent = translation;
             }
         });
-
-        // 触发自定义事件通知语言变更
-        window.dispatchEvent(new CustomEvent('languageChanged', {
-            detail: { language: this.currentLang }
-        }));
     }
 
     getCurrentLanguage() {
         return this.currentLang;
     }
-
-    getSupportedLanguages() {
-        return this.supportedLanguages;
-    }
 }
 
-// 创建全局语言管理器实例
-window.languageManager = new LanguageManager();
-
-// 当DOM加载完成后初始化语言
 document.addEventListener('DOMContentLoaded', () => {
-    window.languageManager.updatePageContent();
+    window.languageManager = new LanguageManager();
+    
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.addedNodes.length) {
+                window.languageManager.updatePageContent();
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 });

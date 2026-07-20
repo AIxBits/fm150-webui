@@ -21,7 +21,9 @@ EOF
 }
 
 download() {
-    local url="$1" destination="$2" tmp="${destination}.new"
+    local url="$1"
+    local destination="$2"
+    local tmp="${destination}.new"
     rm -f "$tmp"
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL "$url" -o "$tmp"

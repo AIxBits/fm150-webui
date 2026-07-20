@@ -1,0 +1,14 @@
+[Unit]
+Description=Read from FM150 smd9 and write to /dev/ttyIN
+BindsTo=socat-smd9.service
+After=socat-smd9.service
+
+[Service]
+ExecStart=/bin/bash -c "/bin/cat /dev/smd9 > /dev/ttyIN"
+ExecStartPost=/bin/sleep 2s
+StandardInput=tty-force
+Restart=always
+RestartSec=1s
+
+[Install]
+WantedBy=multi-user.target

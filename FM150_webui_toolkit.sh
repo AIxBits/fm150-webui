@@ -13,7 +13,7 @@ INDEX="$WEB_ROOT/index.html"
 usage() {
     cat <<'EOF'
 Usage:
-  FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/<user>/<repo>/<branch>/simpleadmin/www ./FM150_webui_toolkit.sh [install|update|bridge-install|full-install|uninstall|check]
+  FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/<user>/<repo>/<branch>/simpleadmin/www ./FM150_webui_toolkit.sh [install|update|bridge-install|bridge-uninstall|full-install|uninstall|check]
 
 The source URL must contain fm150.html and cgi-bin/fm150_at.
 bridge-install configures ttyOUT2 -> smd7 and ttyOUT -> smd9.
@@ -86,6 +86,14 @@ bridge_install() {
     FM150_BRIDGE_SOURCE="$REPO_ROOT" "$installer" install
 }
 
+bridge_uninstall() {
+    [ -n "$REPO_ROOT" ] || { usage >&2; exit 1; }
+    local installer=/tmp/FM150_socat_bridge_install.sh
+    download "$REPO_ROOT/FM150_socat_bridge_install.sh" "$installer"
+    chmod 0755 "$installer"
+    FM150_BRIDGE_SOURCE="$REPO_ROOT" "$installer" uninstall
+}
+
 uninstall() {
     [ "$(id -u)" = 0 ] || { echo 'ERROR: run as root.' >&2; exit 1; }
     rm -f "$WEB_ROOT/fm150.html" "$CGI_ROOT/fm150_at"
@@ -99,6 +107,7 @@ uninstall() {
 case "$ACTION" in
     install|update) install ;;
     bridge-install) bridge_install ;;
+    bridge-uninstall) bridge_uninstall ;;
     full-install) bridge_install; install ;;
     uninstall) uninstall ;;
     check) check ;;

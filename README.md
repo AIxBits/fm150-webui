@@ -33,7 +33,7 @@ ls -l /dev/ttyOUT2 /dev/ttyOUT
 /usrdata/socat-at-bridge/atcmd 'AT+GTCCINFO?'
 ```
 
-完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)。当前 FM150 实机映射为 `/dev/smd7` → `ttyOUT2`、`/dev/smd9` → `ttyOUT`；为兼容上游，备用通道 unit 文件名仍含 `smd11`，但其实际 `ExecStart` 使用 `/dev/smd9`。不同 FM150 固件可能不同，**请先核对设备映射，不要直接启用这些单元。** 详细说明见 [FM150 bridge 文档](socat-at-bridge/FM150_README.md)。
+完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)。当前 FM150 实机映射为 `/dev/smd7` → `ttyOUT2`、`/dev/smd9` → `ttyOUT`；对应服务明确命名为 `socat-smd7*` 与 `socat-smd9*`。`FM150_socat_bridge_install.sh` 会迁移旧的 `socat-smd11*` 服务。不同 FM150 固件可能不同，安装器会先检查节点。详细说明见 [FM150 bridge 文档](socat-at-bridge/FM150_README.md)。
 
 ## 安装 FM150 Web 页面
 
@@ -45,7 +45,7 @@ wget -O FM150_webui_toolkit.sh \
   https://raw.githubusercontent.com/AIxBits/fm150-webui/main/FM150_webui_toolkit.sh
 chmod +x FM150_webui_toolkit.sh
 FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/AIxBits/fm150-webui/main/simpleadmin/www \
-  ./FM150_webui_toolkit.sh install
+  ./FM150_webui_toolkit.sh full-install
 ```
 
 安装后访问：

@@ -8,7 +8,8 @@
 
 ## FM150 功能
 
-- Web 页面：`/fm150.html`
+- 默认首页：自动显示 FM150 的 SIM、运营商、PDP 地址、网络制式、小区、信号与温度
+- Web 页面：`/fm150.html`（预设与自定义 AT）
 - FM150 专用状态：`AT+GTCCINFO?`、`AT+GTCAINFO?`、`AT+PSRAT?`、`AT+GTUSBMODE?`、`AT+MTSM`
 - 常用查询：`ATI`、`CPIN?`、`CSQ`、`CESQ`、`COPS?`、`CGDCONT?`、`CGPADDR`、`CGSN`、`CBC`
 - 控制：SIM 切换、4G/5G/自动搜网、ECM 拨号、USB 网络模式、模块重启

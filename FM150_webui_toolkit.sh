@@ -1,12 +1,11 @@
 #!/bin/bash
-# FM150 Simple Admin overlay installer.
-# This intentionally installs only the FM150 page and CGI endpoint; it does
-# not replace the existing Simple Admin, Lighttpd configuration, or AT bridge.
+# FM150 Simple Admin installer and optional smd7/smd9 AT bridge installer.
 
 set -u
 
 ACTION=${1:-install}
 BASE_URL=${FM150_WEBUI_BASE_URL:-}
+REPO_ROOT=${FM150_REPO_ROOT:-${BASE_URL%/simpleadmin/www}}
 WEB_ROOT=/usrdata/simpleadmin/www
 CGI_ROOT="$WEB_ROOT/cgi-bin"
 INDEX="$WEB_ROOT/index.html"
@@ -14,9 +13,10 @@ INDEX="$WEB_ROOT/index.html"
 usage() {
     cat <<'EOF'
 Usage:
-  FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/<user>/<repo>/<branch>/simpleadmin/www ./FM150_webui_toolkit.sh [install|update|uninstall|check]
+  FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/<user>/<repo>/<branch>/simpleadmin/www ./FM150_webui_toolkit.sh [install|update|bridge-install|full-install|uninstall|check]
 
 The source URL must contain fm150.html and cgi-bin/fm150_at.
+bridge-install configures ttyOUT2 -> smd7 and ttyOUT -> smd9.
 EOF
 }
 
@@ -78,6 +78,14 @@ install() {
     check
 }
 
+bridge_install() {
+    [ -n "$REPO_ROOT" ] || { usage >&2; exit 1; }
+    local installer=/tmp/FM150_socat_bridge_install.sh
+    download "$REPO_ROOT/FM150_socat_bridge_install.sh" "$installer"
+    chmod 0755 "$installer"
+    FM150_BRIDGE_SOURCE="$REPO_ROOT" "$installer" install
+}
+
 uninstall() {
     [ "$(id -u)" = 0 ] || { echo 'ERROR: run as root.' >&2; exit 1; }
     rm -f "$WEB_ROOT/fm150.html" "$CGI_ROOT/fm150_at"
@@ -90,6 +98,8 @@ uninstall() {
 
 case "$ACTION" in
     install|update) install ;;
+    bridge-install) bridge_install ;;
+    full-install) bridge_install; install ;;
     uninstall) uninstall ;;
     check) check ;;
     -h|--help|help) usage ;;

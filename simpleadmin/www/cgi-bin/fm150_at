@@ -26,12 +26,14 @@ case "$ATCMD" in
     *$'\r'*|*$'\n'*) printf 'ERROR: line breaks are not allowed\n'; exit 1 ;;
 esac
 
-AT_BRIDGE=${FM150_AT_BRIDGE:-/usrdata/socat-at-bridge/atcmd}
+# The verified FM150-AE/NA-01 AT channel is smd9, exposed by the existing
+# bridge as ttyOUT / atcmd11. Do not replace the user's bridge here.
+AT_BRIDGE=${FM150_AT_BRIDGE:-/usrdata/socat-at-bridge/atcmd11}
 if [ ! -x "$AT_BRIDGE" ]; then
-    AT_BRIDGE=/bin/atcmd
+    AT_BRIDGE=/bin/atcmd11
 fi
 if [ ! -x "$AT_BRIDGE" ]; then
-    printf 'ERROR: FM150 AT bridge not found; set FM150_AT_BRIDGE or install /usrdata/socat-at-bridge/atcmd\n'
+    printf 'ERROR: FM150 AT bridge not found; set FM150_AT_BRIDGE or provide /usrdata/socat-at-bridge/atcmd11\n'
     exit 1
 fi
 

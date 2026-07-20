@@ -73,6 +73,21 @@ install_bridge() {
     echo 'Test the primary channel with: atcmd ATI'
 }
 
+remove_bridge() {
+    [ "$(id -u)" = 0 ] || { echo 'ERROR: run as root.' >&2; exit 1; }
+    mount -o remount,rw / 2>/dev/null || true
+    stop_existing_bridge
+    for unit in $UNITS; do rm -f "$UNIT_DIR/$unit.service"; done
+    for command in atcmd atcmd11; do
+        if [ -L "/bin/$command" ] && [ "$(readlink "/bin/$command" 2>/dev/null || true)" = "$BRIDGE_DIR/$command" ]; then
+            rm -f "/bin/$command"
+        fi
+    done
+    rm -rf "$BRIDGE_DIR"
+    systemctl daemon-reload
+    echo 'FM150/legacy socat AT bridge removed. Simple Admin and Lighttpd were not changed.'
+}
+
 status_bridge() {
     echo 'Expected mapping: ttyOUT2 -> smd7; ttyOUT -> smd9'
     ls -l /dev/smd7 /dev/smd9 /dev/ttyOUT2 /dev/ttyOUT 2>/dev/null || true
@@ -81,6 +96,7 @@ status_bridge() {
 
 case "$ACTION" in
     install|update) install_bridge ;;
+    uninstall) remove_bridge ;;
     status|check) status_bridge ;;
-    *) echo "Usage: $0 [install|update|status]" >&2; exit 2 ;;
+    *) echo "Usage: $0 [install|update|uninstall|status]" >&2; exit 2 ;;
 esac

@@ -28,12 +28,18 @@ require_root_and_nodes() {
     [ -c /dev/smd9 ] || { echo 'ERROR: /dev/smd9 is missing.' >&2; exit 1; }
 }
 
-stop_legacy() {
-    for unit in socat-smd11 socat-smd11-to-ttyIN socat-smd11-from-ttyIN; do
+stop_existing_bridge() {
+    # Stop both the legacy Quectel naming and any partially installed FM150
+    # services.  They are enabled again from the files installed below.
+    systemctl stop at-telnet-daemon 2>/dev/null || true
+    systemctl disable at-telnet-daemon 2>/dev/null || true
+    for unit in socat-killsmd7bridge socat-smd7 socat-smd7-to-ttyIN2 socat-smd7-from-ttyIN2 socat-smd9 socat-smd9-to-ttyIN socat-smd9-from-ttyIN socat-smd11 socat-smd11-to-ttyIN socat-smd11-from-ttyIN; do
         systemctl stop "$unit" 2>/dev/null || true
         systemctl disable "$unit" 2>/dev/null || true
-        rm -f "$UNIT_DIR/$unit.service"
     done
+    # Only remove the obsolete names.  The smd7/smd9 names are replaced in
+    # place after the new service files have been downloaded.
+    rm -f "$UNIT_DIR/socat-smd11.service" "$UNIT_DIR/socat-smd11-to-ttyIN.service" "$UNIT_DIR/socat-smd11-from-ttyIN.service"
 }
 
 install_bridge() {
@@ -49,7 +55,7 @@ install_bridge() {
     ln -sf "$BRIDGE_DIR/atcmd" /bin/atcmd
     ln -sf "$BRIDGE_DIR/atcmd11" /bin/atcmd11
 
-    stop_legacy
+    stop_existing_bridge
     for unit in $UNITS; do
         download "$SOURCE/socat-at-bridge/systemd_units/$unit.service" "$BRIDGE_DIR/systemd_units/$unit.service"
         cp "$BRIDGE_DIR/systemd_units/$unit.service" "$UNIT_DIR/$unit.service"

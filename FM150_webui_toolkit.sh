@@ -1,11 +1,11 @@
 #!/bin/bash
-# FM150 Simple Admin installer and optional smd7/smd9 AT bridge installer.
+# FM150 Simple Admin installer. It deliberately preserves the existing,
+# device-verified socat AT bridge.
 
 set -u
 
 ACTION=${1:-install}
 BASE_URL=${FM150_WEBUI_BASE_URL:-}
-REPO_ROOT=${FM150_REPO_ROOT:-${BASE_URL%/simpleadmin/www}}
 WEB_ROOT=/usrdata/simpleadmin/www
 CGI_ROOT="$WEB_ROOT/cgi-bin"
 INDEX="$WEB_ROOT/index.html"
@@ -13,10 +13,10 @@ INDEX="$WEB_ROOT/index.html"
 usage() {
     cat <<'EOF'
 Usage:
-  FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/<user>/<repo>/<branch>/simpleadmin/www ./FM150_webui_toolkit.sh [install|update|bridge-install|bridge-uninstall|full-install|uninstall|check]
+  FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/<user>/<repo>/<branch>/simpleadmin/www ./FM150_webui_toolkit.sh [install|update|full-install|uninstall|check]
 
 The source URL must contain fm150.html and cgi-bin/fm150_at.
-bridge-install configures ttyOUT2 -> smd7 and ttyOUT -> smd9.
+full-install installs the Web files only; it does not alter socat, PTYs, or AT services.
 EOF
 }
 
@@ -44,7 +44,7 @@ restart_web() {
 }
 
 check() {
-    local bridge=${FM150_AT_BRIDGE:-/usrdata/socat-at-bridge/atcmd}
+    local bridge=${FM150_AT_BRIDGE:-/usrdata/socat-at-bridge/atcmd11}
     echo "Web root: $WEB_ROOT"
     echo "FM150 page: $([ -f "$WEB_ROOT/fm150.html" ] && echo installed || echo missing)"
     echo "FM150 CGI: $([ -x "$CGI_ROOT/fm150_at" ] && echo installed || echo missing)"
@@ -80,21 +80,6 @@ install() {
     check
 }
 
-bridge_install() {
-    [ -n "$REPO_ROOT" ] || { usage >&2; exit 1; }
-    local installer=/tmp/FM150_socat_bridge_install.sh
-    download "$REPO_ROOT/FM150_socat_bridge_install.sh" "$installer"
-    chmod 0755 "$installer"
-    FM150_BRIDGE_SOURCE="$REPO_ROOT" "$installer" install
-}
-
-bridge_uninstall() {
-    [ -n "$REPO_ROOT" ] || { usage >&2; exit 1; }
-    local installer=/tmp/FM150_socat_bridge_install.sh
-    download "$REPO_ROOT/FM150_socat_bridge_install.sh" "$installer"
-    chmod 0755 "$installer"
-    FM150_BRIDGE_SOURCE="$REPO_ROOT" "$installer" uninstall
-}
 
 uninstall() {
     [ "$(id -u)" = 0 ] || { echo 'ERROR: run as root.' >&2; exit 1; }
@@ -108,9 +93,7 @@ uninstall() {
 
 case "$ACTION" in
     install|update) install ;;
-    bridge-install) bridge_install ;;
-    bridge-uninstall) bridge_uninstall ;;
-    full-install) bridge_install; install ;;
+    full-install) install ;;
     uninstall) uninstall ;;
     check) check ;;
     -h|--help|help) usage ;;

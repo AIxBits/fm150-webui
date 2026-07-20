@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FM150 AT 控制</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/alpinejs.min.js" defer></script>
+  </head>
+  <body>
+    <main class="container my-4" x-data="fm150At()">
+      <nav class="navbar navbar-expand-lg mt-2 mb-4">
+        <a class="navbar-brand" href="/">Simple Admin</a>
+        <div class="navbar-nav">
+          <a class="nav-link" href="/">首页</a>
+          <a class="nav-link active" href="/fm150.html">FM150 AT</a>
+          <a class="nav-link" href="/console">终端</a>
+        </div>
+      </nav>
+
+      <div class="alert alert-warning">
+        <strong>FM150-AE/NA 专用。</strong> 每次只发送一条命令，避免多条命令的回包被 AT bridge 截断。切换 USB 模式或重启会导致当前网页连接短暂中断。
+      </div>
+
+      <div class="row g-3">
+        <template x-for="group in groups" :key="group.title">
+          <div class="col-12 col-lg-6">
+            <section class="card h-100">
+              <div class="card-header" x-text="group.title"></div>
+              <div class="list-group list-group-flush">
+                <template x-for="item in group.items" :key="item.cmd">
+                  <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                    :class="item.danger ? 'list-group-item-warning' : ''"
+                    @click="runPreset(item)">
+                    <span x-text="item.label"></span><code x-text="item.cmd"></code>
+                  </button>
+                </template>
+              </div>
+            </section>
+          </div>
+        </template>
+      </div>
+
+      <section class="card mt-3">
+        <div class="card-header">自定义 AT 命令</div>
+        <div class="card-body">
+          <div class="input-group">
+            <input class="form-control" x-model="custom" @keydown.enter="runCustom()" placeholder="例如：AT+GTCCINFO?">
+            <button class="btn btn-primary" @click="runCustom()" :disabled="busy">发送</button>
+          </div>
+          <div class="form-text">仅接受以 AT 开头的单行命令；不要在此处用分号串联命令。</div>
+        </div>
+      </section>
+
+      <section class="card mt-3">
+        <div class="card-header d-flex justify-content-between"><span>返回结果</span><span x-show="busy" class="spinner-border spinner-border-sm"></span></div>
+        <pre class="card-body mb-0 text-wrap" style="min-height: 12rem" x-text="response || '请选择一条命令。'"></pre>
+      </section>
+    </main>
+    <script>
+      function fm150At() {
+        return {
+          busy: false, response: '', custom: '',
+          groups: [
+            { title: '状态与小区信息', items: [
+              { label: '模块信息', cmd: 'ATI' },
+              { label: 'SIM 卡状态', cmd: 'AT+CPIN?' },
+              { label: '4G 信号质量', cmd: 'AT+CSQ' },
+              { label: '扩展信号质量（含 5G 指标）', cmd: 'AT+CESQ' },
+              { label: '运营商信息', cmd: 'AT+COPS?' },
+              { label: 'PDP 上下文', cmd: 'AT+CGDCONT?' },
+              { label: 'PDP 地址', cmd: 'AT+CGPADDR' },
+              { label: 'IMEI', cmd: 'AT+CGSN' },
+              { label: 'IMEI（备用查询）', cmd: 'AT+GSN' },
+              { label: 'IMEI（Fibocom 序列号接口）', cmd: 'AT+GTSN=0,7' },
+              { label: '当前电压', cmd: 'AT+CBC' },
+              { label: '当前网络类型', cmd: 'AT+PSRAT?' },
+              { label: '服务小区（FM150）', cmd: 'AT+GTCCINFO?' },
+              { label: '载波聚合（FM150）', cmd: 'AT+GTCAINFO?' },
+              { label: '当前端口模式', cmd: 'AT+GTUSBMODE?' },
+              { label: 'BBIC 温度', cmd: 'AT+MTSM=1,6' },
+              { label: '射频温度', cmd: 'AT+MTSM=1,7' }
+            ]},
+            { title: '网络与 SIM 控制', items: [
+              { label: '使用 SIM 1', cmd: 'AT+GTDUALSIM=0', danger: true },
+              { label: '使用 SIM 2', cmd: 'AT+GTDUALSIM=1', danger: true },
+              { label: '锁定 4G', cmd: 'AT+GTACT=2', danger: true },
+              { label: '锁定 5G', cmd: 'AT+GTACT=14', danger: true },
+              { label: '恢复自动搜网', cmd: 'AT+GTACT=20', danger: true },
+              { label: 'ECM 手动拨号', cmd: 'AT+GTRNDIS=1,1', danger: true },
+              { label: 'ECM 断开', cmd: 'AT+GTRNDIS=0,1', danger: true }
+            ]},
+            { title: 'USB 模式与重启', items: [
+              { label: '最小功能模式', cmd: 'AT+CFUN=0', danger: true },
+              { label: '全功能模式', cmd: 'AT+CFUN=1', danger: true },
+              { label: 'QMI / GobiNet', cmd: 'AT+GTUSBMODE=32', danger: true },
+              { label: 'ECM / NCM', cmd: 'AT+GTUSBMODE=18', danger: true },
+              { label: 'MBIM', cmd: 'AT+GTUSBMODE=30', danger: true },
+              { label: 'RNDIS', cmd: 'AT+GTUSBMODE=24', danger: true },
+              { label: '重启模块', cmd: 'AT+CFUN=1,1', danger: true },
+              { label: 'FM150 重启', cmd: 'AT+CFUN=15', danger: true }
+            ]}
+          ],
+          async runPreset(item) {
+            if (item.danger && !confirm(`${item.cmd} 可能会断网或让网页暂时无法访问。继续？`)) return;
+            await this.run(item.cmd);
+          },
+          async runCustom() { await this.run(this.custom.trim()); },
+          async run(command) {
+            if (!command) return;
+            this.busy = true; this.response = `正在执行：${command}`;
+            try {
+              const res = await fetch(`/cgi-bin/fm150_at?${new URLSearchParams({atcmd: command})}`);
+              this.response = await res.text();
+            } catch (error) {
+              this.response = `请求失败：${error.message}`;
+            } finally { this.busy = false; }
+          }
+        };
+      }
+    </script>
+  </body>
+</html>

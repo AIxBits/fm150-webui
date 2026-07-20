@@ -1,0 +1,57 @@
+#!/bin/bash
+# FM150 AT command endpoint.  The argument is never evaluated by a shell.
+
+printf 'Content-Type: text/plain; charset=utf-8\r\n\r\n'
+
+urldecode() {
+    local value="${1//+/ }"
+    printf '%b' "$(printf '%s' "$value" | sed 's/%/\\x/g')"
+}
+
+encoded=$(printf '%s' "$QUERY_STRING" | tr '&' '\n' | sed -n 's/^atcmd=//p' | head -n 1)
+ATCMD=$(urldecode "$encoded")
+
+if [ -z "$ATCMD" ] || [ "${#ATCMD}" -gt 256 ]; then
+    printf 'ERROR: missing or oversized AT command\n'
+    exit 1
+fi
+
+# Accept AT syntax only.  More importantly, forbid line breaks so one HTTP
+# request cannot inject a second serial command.
+case "$ATCMD" in
+    AT|AT+*|AT\&*) ;;
+    *) printf 'ERROR: command must start with AT\n'; exit 1 ;;
+esac
+case "$ATCMD" in
+    *$'\r'*|*$'\n'*) printf 'ERROR: line breaks are not allowed\n'; exit 1 ;;
+esac
+
+AT_BRIDGE=${FM150_AT_BRIDGE:-/usrdata/socat-at-bridge/atcmd}
+if [ ! -x "$AT_BRIDGE" ]; then
+    AT_BRIDGE=/bin/atcmd
+fi
+if [ ! -x "$AT_BRIDGE" ]; then
+    printf 'ERROR: FM150 AT bridge not found; set FM150_AT_BRIDGE or install /usrdata/socat-at-bridge/atcmd\n'
+    exit 1
+fi
+
+# The serial port is single-client.  Avoid interleaving requests from polling
+# and button clicks, which otherwise corrupts AT responses.
+LOCK=/tmp/fm150-at.lock
+attempt=0
+until mkdir "$LOCK" 2>/dev/null; do
+    attempt=$((attempt + 1))
+    if [ "$attempt" -ge 50 ]; then
+        printf 'ERROR: another AT command is still running\n'
+        exit 1
+    fi
+    sleep 0.1
+done
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+
+printf '%s\n\n' "$ATCMD"
+if command -v timeout >/dev/null 2>&1; then
+    timeout 30 "$AT_BRIDGE" "$ATCMD"
+else
+    "$AT_BRIDGE" "$ATCMD"
+fi

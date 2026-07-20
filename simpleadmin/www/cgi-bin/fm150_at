@@ -52,8 +52,7 @@ done
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 printf '%s\n\n' "$ATCMD"
-if command -v timeout >/dev/null 2>&1; then
-    timeout 30 "$AT_BRIDGE" "$ATCMD"
-else
-    "$AT_BRIDGE" "$ATCMD"
-fi
+# BusyBox timeout differs between FM150 firmware builds; invoking it as
+# "timeout 30 ..." can try to execute a program literally named "30".
+# atcmd11 already waits for the modem's OK/ERROR terminator.
+"$AT_BRIDGE" "$ATCMD"

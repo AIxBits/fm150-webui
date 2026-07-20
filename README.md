@@ -35,9 +35,9 @@ ls -l /dev/ttyOUT2 /dev/ttyOUT
 
 完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)。当前 FM150 实机映射为 `/dev/smd7` → `ttyOUT2`、`/dev/smd9` → `ttyOUT`；对应服务明确命名为 `socat-smd7*` 与 `socat-smd9*`。`FM150_socat_bridge_install.sh` 会迁移旧的 `socat-smd11*` 服务。不同 FM150 固件可能不同，安装器会先检查节点。详细说明见 [FM150 bridge 文档](socat-at-bridge/FM150_README.md)。
 
-## 安装 FM150 Web 页面
+## 完整部署（AT bridge + Web 服务）
 
-前提：设备已经有可用的 Simple Admin/Lighttpd，且上述 `atcmd` 能够执行。
+前提：设备已经有可用的 Simple Admin/Lighttpd。完整部署会检查 `/dev/smd7`、`/dev/smd9`，安装并启动 AT bridge，再部署 FM150 Web 服务；不需要预先存在 `atcmd`。
 
 ```sh
 cd /tmp
@@ -54,13 +54,10 @@ FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/AIxBits/fm150-webui/main/
 https://<FM150 管理地址>/fm150.html
 ```
 
-维护命令：
+部署完成后可检查服务状态：
 
 ```sh
-FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/AIxBits/fm150-webui/main/simpleadmin/www \
-  ./FM150_webui_toolkit.sh update
 ./FM150_webui_toolkit.sh check
-./FM150_webui_toolkit.sh uninstall
 ```
 
 ## 风险提示
@@ -77,7 +74,7 @@ IMEI 写入不提供一键功能。只应在合法维修场景下，通过自定
 ## 目录
 
 ```text
-FM150_webui_toolkit.sh       FM150 覆盖层安装、更新、检查、卸载
+FM150_webui_toolkit.sh       FM150 完整部署与状态检查
 FM150_DEPLOY.md              详细部署说明
 simpleadmin/www/fm150.html   FM150 Web 页面
 simpleadmin/www/cgi-bin/fm150_at  安全的 AT CGI 接口

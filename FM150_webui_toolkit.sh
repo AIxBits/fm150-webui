@@ -65,15 +65,12 @@ install() {
     fi
 
     echo 'Downloading FM150 web files...'
+    download "$BASE_URL/index.html" "$INDEX"
     download "$BASE_URL/fm150.html" "$WEB_ROOT/fm150.html"
     download "$BASE_URL/cgi-bin/fm150_at" "$CGI_ROOT/fm150_at"
     chmod 0755 "$CGI_ROOT/fm150_at"
 
-    # The FM150 page works directly at /fm150.html. Add a navigation entry if
-    # this is the stock Simple Admin page and no entry exists yet.
-    if [ -f "$INDEX" ] && ! grep -q 'href="/fm150.html"' "$INDEX"; then
-        sed -i '/href="\/settings.html"/a\                <li class="nav-item"><a class="nav-link" href="/fm150.html">FM150 AT</a></li>' "$INDEX"
-    fi
+    # index.html is the FM150 dashboard and already contains the FM150 AT link.
 
     restart_web
     echo 'FM150 Web AT overlay installed. Open: https://<module-ip>/fm150.html'

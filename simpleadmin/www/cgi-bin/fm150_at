@@ -55,4 +55,5 @@ printf '%s\n\n' "$ATCMD"
 # BusyBox timeout differs between FM150 firmware builds; invoking it as
 # "timeout 30 ..." can try to execute a program literally named "30".
 # atcmd11 already waits for the modem's OK/ERROR terminator.
-"$AT_BRIDGE" "$ATCMD"
+ESC=$(printf '\033')
+"$AT_BRIDGE" "$ATCMD" | sed "s/${ESC}\\[[0-9;]*m//g" | tr -d '\r'

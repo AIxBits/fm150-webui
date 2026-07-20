@@ -13,6 +13,6 @@ FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/AIxBits/fm150-webui/main/
   ./FM150_webui_toolkit.sh full-install
 ```
 
-`full-install` 只安装 Web 服务。其默认 AT 后端是经实机验证的 `/usrdata/socat-at-bridge/atcmd11`（`ttyOUT -> smd9`）。安装完成后访问 `https://<模组管理地址>/fm150.html`；状态检查使用 `./FM150_webui_toolkit.sh check`。
+`full-install` 会更新默认首页为 FM150 状态仪表盘，并安装 `/fm150.html` 与 CGI；它不改动 bridge。默认 AT 后端是经实机验证的 `/usrdata/socat-at-bridge/atcmd11`（`ttyOUT -> smd9`）。安装完成后访问 `https://<模组管理地址>/fm150.html`；状态检查使用 `./FM150_webui_toolkit.sh check`。
 
 如果 AT bridge 不在默认位置，可为 Lighttpd 服务设置环境变量 `FM150_AT_BRIDGE=/path/to/atcmd11`，然后重启 `lighttpd`。

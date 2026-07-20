@@ -11,7 +11,9 @@ UNIT_DIR=/lib/systemd/system
 UNITS='socat-killsmd7bridge socat-smd7 socat-smd7-to-ttyIN2 socat-smd7-from-ttyIN2 socat-smd9 socat-smd9-to-ttyIN socat-smd9-from-ttyIN'
 
 download() {
-    local url="$1" destination="$2" tmp="${destination}.new"
+    local url="$1"
+    local destination="$2"
+    local tmp="${destination}.new"
     rm -f "$tmp"
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL "$url" -o "$tmp"

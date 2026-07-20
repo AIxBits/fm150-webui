@@ -21,23 +21,21 @@
 本项目以 FM150 实机验证的以下路径为默认值：
 
 ```text
-/usrdata/socat-at-bridge/atcmd    -> /dev/ttyOUT2
-/usrdata/socat-at-bridge/atcmd11  -> /dev/ttyOUT
+/usrdata/socat-at-bridge/atcmd11  -> /dev/ttyOUT -> /dev/smd9
 ```
 
 安装前先确认：
 
 ```sh
-ls -l /dev/ttyOUT2 /dev/ttyOUT
-/usrdata/socat-at-bridge/atcmd 'ATI'
-/usrdata/socat-at-bridge/atcmd 'AT+GTCCINFO?'
+ls -l /dev/ttyOUT /dev/smd9
+/usrdata/socat-at-bridge/atcmd11 'AT+GTCCINFO?;+GTCAINFO?'
 ```
 
-完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)。当前 FM150 实机映射为 `/dev/smd7` → `ttyOUT2`、`/dev/smd9` → `ttyOUT`；对应服务明确命名为 `socat-smd7*` 与 `socat-smd9*`。`FM150_socat_bridge_install.sh` 会迁移旧的 `socat-smd11*` 服务。不同 FM150 固件可能不同，安装器会先检查节点。详细说明见 [FM150 bridge 文档](socat-at-bridge/FM150_README.md)。
+完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)，但本部署不会重建它。实机验证的 AT 通道为 `/dev/smd9`，由原有 `ttyIN/ttyOUT` 和 `atcmd11` 提供。原项目中名称为 `socat-smd11*` 的服务，在 FM150 上只需把两条转发命令的设备节点改为 `/dev/smd9`；不要为了适配网页而替换已工作的 bridge。
 
-## 完整部署（AT bridge + Web 服务）
+## 完整部署（Web 服务）
 
-前提：设备已经有可用的 Simple Admin/Lighttpd。完整部署会检查 `/dev/smd7`、`/dev/smd9`，安装并启动 AT bridge，再部署 FM150 Web 服务；不需要预先存在 `atcmd`。
+前提：设备已经有可用的 Simple Admin/Lighttpd，以及已验证的 FM150 AT bridge（`atcmd11`）。完整部署只部署网页和 CGI，不会停止、覆盖或重启 AT bridge。
 
 ```sh
 cd /tmp

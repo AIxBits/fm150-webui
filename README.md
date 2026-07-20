@@ -164,3 +164,33 @@ Entware/opkg was obtained through [Entware's wiki](https://github.com/Entware/En
 TTYd was obtained from the [TTYd Project](https://github.com/tsl0922/ttyd)
 
 This code is modified based on [quectel-rgmii-toolkit](https://github.com/iamromulan/quectel-rgmii-toolkit) and is for personal use only.
+
+
+---
+
+# FM150-AE/NA-01 adaptation
+
+This fork adds a Web AT control overlay for Fibocom FM150 modules running an internal Linux environment.
+
+- Open `/fm150.html` after installation.
+- The Web endpoint uses the verified FM150 bridge `/usrdata/socat-at-bridge/atcmd` on `/dev/ttyOUT2`.
+- It includes QWRT/QModem FM150 presets plus `AT+GTCCINFO?` and `AT+GTCAINFO?`.
+- The complete original `socat-at-bridge` directory, static socat binary, and systemd units are preserved in this fork. See [socat-at-bridge/FM150_README.md](socat-at-bridge/FM150_README.md) before enabling bridge units on a different firmware.
+
+## FM150 quick install
+
+```sh
+cd /tmp
+wget -O FM150_webui_toolkit.sh \
+  https://raw.githubusercontent.com/AIxBits/fm150-webui/main/FM150_webui_toolkit.sh
+chmod +x FM150_webui_toolkit.sh
+FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/AIxBits/fm150-webui/main/simpleadmin/www \
+  ./FM150_webui_toolkit.sh install
+```
+
+## FM150 references
+
+- [cachenow/quectel-webui](https://github.com/cachenow/quectel-webui)
+- [iamromulan/quectel-rgmii-toolkit](https://github.com/iamromulan/quectel-rgmii-toolkit)
+- [FUjr/QModem](https://github.com/FUjr/QModem)
+- [OpenWrt FM150 easyconfig parser](https://github.com/obsy/packages/blob/d190c4af80f8a973ff2220c3aa1c0bbe63b3909e/easyconfig/files/usr/share/easyconfig/modem/addon/2cb70104)

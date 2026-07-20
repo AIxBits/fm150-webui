@@ -33,7 +33,7 @@ ls -l /dev/ttyOUT2 /dev/ttyOUT
 /usrdata/socat-at-bridge/atcmd 'AT+GTCCINFO?'
 ```
 
-完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)。原项目的 systemd 单元假定底层设备是 `/dev/smd7`、`/dev/smd11`；不同 FM150 固件可能不同，**请先核对设备映射，不要直接启用这些单元。** 详细说明见 [FM150 bridge 文档](socat-at-bridge/FM150_README.md)。
+完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)。当前 FM150 实机映射为 `/dev/smd7` → `ttyOUT2`、`/dev/smd9` → `ttyOUT`；为兼容上游，备用通道 unit 文件名仍含 `smd11`，但其实际 `ExecStart` 使用 `/dev/smd9`。不同 FM150 固件可能不同，**请先核对设备映射，不要直接启用这些单元。** 详细说明见 [FM150 bridge 文档](socat-at-bridge/FM150_README.md)。
 
 ## 安装 FM150 Web 页面
 

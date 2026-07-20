@@ -1840,5 +1840,97 @@
         };
       }
     </script>
+    <script>
+      /* FM150 dashboard override.  It intentionally replaces the upstream
+         Quectel/QENG polling above with serialized FM150 requests through
+         /cgi-bin/fm150_at (atcmd11 -> ttyOUT -> smd9). */
+      function processAllInfos() {
+        return {
+          internetConnectionStatus: "Unknown", temperature: "--", simStatus: "Unknown",
+          activeSim: "Unknown", networkProvider: "N/A", mccmnc: "N/A", apn: "Unknown",
+          networkMode: "Unknown", bands: "Unknown", bandwidth: "Unknown", earfcns: "Unknown",
+          pccPCI: "Unknown", sccPCI: "-", ipv4: "--", ipv6: "--", uptime: "FM150",
+          cellID: "Unknown", eNBID: "Unknown", tac: "Unknown", csq: "-",
+          rsrpLTE: "-", rsrpNR: "-", rsrqLTE: "-", rsrqNR: "-", sinrLTE: "-", sinrNR: "-",
+          rsrpLTEPercentage: "0", rsrpNRPercentage: "0", rsrqLTEPercentage: "0",
+          rsrqNRPercentage: "0", sinrLTEPercentage: "0", sinrNRPercentage: "0",
+          signalPercentage: "0", signalAssessment: "Unknown", downloadStat: "N/A",
+          uploadStat: "N/A", nrDownload: "0", nrUpload: "0", nonNrDownload: "0",
+          nonNrUpload: "0", lastUpdate: "--", refreshRate: 15, newRefreshRate: null,
+          intervalId: null, busy: false,
+
+          async at(command) {
+            const response = await fetch(`/cgi-bin/fm150_at?${new URLSearchParams({ atcmd: command })}`);
+            const text = await response.text();
+            if (!response.ok || /(^|\n)ERROR($|\n)/.test(text)) throw new Error(command);
+            return text;
+          },
+          value(text, expression, fallback = "Unknown") {
+            const match = text.match(expression);
+            return match && match[1] ? match[1].trim() : fallback;
+          },
+          async refresh() {
+            if (this.busy) return;
+            this.busy = true;
+            const read = async (command) => { try { return await this.at(command); } catch (_) { return ""; } };
+            const cpin = await read("AT+CPIN?");
+            this.simStatus = cpin.includes("+CPIN: READY") ? "Ready" : (cpin.includes("NOT INSERTED") ? "No SIM" : "Unknown");
+
+            const csq = await read("AT+CSQ");
+            const csqMatch = csq.match(/\+CSQ:\s*(\d+),(\d+)/);
+            if (csqMatch) {
+              this.csq = `${csqMatch[1]},${csqMatch[2]}`;
+              const rssi = Number(csqMatch[1]);
+              this.signalPercentage = rssi >= 0 && rssi <= 31 ? String(Math.round(rssi * 100 / 31)) : "0";
+              this.signalAssessment = rssi === 99 ? "Unknown" : (rssi >= 20 ? "Good" : rssi >= 10 ? "Fair" : "Weak");
+            }
+
+            const cops = await read("AT+COPS?");
+            this.networkProvider = this.value(cops, /\+COPS:\s*\d+,\d+,"([^"]+)"/, "N/A");
+
+            const pdp = await read("AT+CGDCONT?");
+            this.apn = this.value(pdp, /\+CGDCONT:\s*\d+,"[^"]+","([^"]*)"/, "Unknown");
+            const address = await read("AT+CGPADDR");
+            this.ipv4 = this.value(address, /\+CGPADDR:\s*\d+,([0-9.]+)/, "--");
+            this.internetConnectionStatus = this.ipv4 !== "--" && this.ipv4 !== "0.0.0.0" ? "Connected" : "Disconnected";
+
+            const rat = await read("AT+PSRAT?");
+            this.networkMode = this.value(rat, /\+PSRAT:\s*([^\r\n]+)/, "Unknown");
+            const cell = await read("AT+GTCCINFO?");
+            const cellLine = cell.split(/\r?\n/).find((line) => /^\d+,\d+,\d{3},/.test(line.trim()));
+            if (cellLine) {
+              const fields = cellLine.trim().split(",");
+              this.mccmnc = `${fields[2] || ""}${fields[3] || ""}` || "N/A";
+              this.tac = fields[4] || "Unknown";
+              this.cellID = fields[5] || "Unknown";
+              this.pccPCI = fields[6] || "Unknown";
+              this.eNBID = fields[5] || "Unknown";
+              this.networkMode = cell.includes("NR service cell") ? "NR 5G" : (cell.includes("LTE service cell") ? "LTE 4G" : this.networkMode);
+              this.bands = cell.includes("NR service cell") ? `NR band ${fields[1] || "?"}` : `LTE band ${fields[1] || "?"}`;
+              this.earfcns = fields[8] || "Unknown";
+            }
+            const temp = await read("AT+MTSM=1,6");
+            const tempLine = temp.split(/\r?\n/).find((line) => /MTSM|TEMP/i.test(line) && !line.startsWith("AT+"));
+            const degrees = tempLine && tempLine.match(/-?\d+(?:\.\d+)?/g);
+            if (degrees && degrees.length) this.temperature = degrees[degrees.length - 1];
+            this.lastUpdate = new Date().toLocaleString();
+            this.busy = false;
+          },
+          fetchAllInfo() { return this.refresh(); },
+          updateRefreshRate() {
+            const seconds = Math.max(10, Number(this.newRefreshRate) || this.refreshRate);
+            this.refreshRate = seconds; localStorage.setItem("fm150RefreshRate", seconds);
+            clearInterval(this.intervalId); this.intervalId = setInterval(() => this.refresh(), seconds * 1000);
+          },
+          init() {
+            this.refreshRate = Math.max(10, Number(localStorage.getItem("fm150RefreshRate")) || 15);
+            this.refresh();
+            this.intervalId = setInterval(() => this.refresh(), this.refreshRate * 1000);
+          }
+        };
+      }
+    </script>
+  </body>
+</html>
   </body>
 </html>

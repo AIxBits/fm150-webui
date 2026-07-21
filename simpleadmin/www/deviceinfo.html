@@ -1,62 +1,43 @@
 <!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FM150 设备信息</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css" />
-    <script src="js/bootstrap.bundle.min.js"></script>
-  </head>
-  <body>
-    <main class="container my-4">
-      <nav class="navbar navbar-expand-lg mt-2"><div class="container-fluid"><a class="navbar-brand" href="/"><span class="mb-0 h4">FM150 模块管理</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="nav"><ul class="navbar-nav me-auto mb-2 mb-lg-0"><li class="nav-item"><a class="nav-link" href="/">首页</a></li><li class="nav-item"><a class="nav-link" href="/network.html">网络</a></li><li class="nav-item"><a class="nav-link" href="/scanner.html">扫描</a></li><li class="nav-item"><a class="nav-link" href="/settings.html">设置</a></li><li class="nav-item"><a class="nav-link" href="/sms.html">短信</a></li><li class="nav-item"><a class="nav-link" href="/fm150.html">FM150 AT</a></li><li class="nav-item"><a class="nav-link" href="/console">终端</a></li><li class="nav-item"><a class="nav-link active" href="/deviceinfo.html">设备信息</a></li></ul><button class="btn btn-outline-primary" id="refresh">刷新</button></div></div></nav>
-      <div id="notice" class="alert alert-secondary mt-4">正在读取设备信息…</div>
-      <div class="card"><div class="card-header">设备信息</div><div class="card-body"><div class="table-responsive"><table class="table mb-0"><tbody id="device"></tbody></table></div></div></div>
-      <div class="card mt-3"><div class="card-header">原始 ATI 返回</div><div class="card-body"><pre class="mb-0" id="ati">等待查询…</pre></div></div>
-      <div class="alert alert-info mt-3 mb-0">IMEI 仅供读取。本 FM150 页面不提供修改 IMEI 的功能。</div>
-      <footer class="text-center text-muted small my-4">项目贡献者：AIxBits；参考项目：cachenow/quectel-webui、iamromulan/quectel-rgmii-toolkit。<br />Copyright © 2024–<span id="copyright-year"></span> AIxBits. All rights reserved.</footer>
-    </main>
-    <script>
-      const endpoint = '/cgi-bin/fm150_at';
-      const serviceVersion = 'FM150 WebUI v1.0.0';
-      const esc = value => String(value || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-      const line = (label, value) => `<tr><th>${label}</th><td>${esc(value || '未知')}</td></tr>`;
-      const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-      async function at(command) { const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 7000); try { const r = await fetch(endpoint + '?' + new URLSearchParams({atcmd:command}), {cache:'no-store', signal:ctl.signal}); const body = await r.text(); if (/another AT command is still running/i.test(body)) throw new Error('AT 通道忙'); return body; } finally { clearTimeout(timer); } }
-      async function atRetry(command) { let last; for (let i = 0; i < 3; i++) { try { return await at(command); } catch (e) { last = e; await pause(1200); } } throw last; }
-      function useful(out) { return out.split(/\r?\n/).map(v=>v.trim()).filter(v => v && v !== 'OK' && !/^AT/i.test(v) && !/^\+/.test(v) && !/^ERROR/i.test(v)); }
-      function tagged(out, tag) { const m = out.match(new RegExp('^\\s*' + tag.replace(/[+?]/g, '\\$&') + '\\s*:?\\s*(.*)$', 'm')); return m ? m[1].replace(/["\r]/g,'').trim() : ''; }
-      let refreshing = false;
-      async function refresh() {
-        if (refreshing) return;
-        refreshing = true;
-        document.getElementById('refresh').disabled = true;
-        document.getElementById('notice').textContent = '正在读取设备信息…';
-        try {
-          // FM150 使用单一 AT 串口，不能使用 Promise.all 并发查询。
-          const ati = await atRetry('ATI');
-          const imeiA = await atRetry('AT+CGSN');
-          const imeiB = await atRetry('AT+GTSN=0,7');
-          const imsi = await atRetry('AT+CIMI');
-          const iccidA = await atRetry('AT+ICCID');
-          const iccidB = await atRetry('AT+CCID');
-          const number = await atRetry('AT+CNUM');
-          const rat = await atRetry('AT+PSRAT?');
-          const ip = await atRetry('AT+CGPADDR');
-          const atiLines = useful(ati), imei = useful(imeiA).find(v=>/^\d{14,17}$/.test(v)) || tagged(imeiA,'+CGSN') || useful(imeiB).find(v=>/^\d{14,17}$/.test(v)) || tagged(imeiB,'+GTSN') || '未获取到';
-          const imsiValue = useful(imsi).find(v=>/^\d{10,20}$/.test(v)) || '未知';
-          const iccidValue = tagged(iccidA,'+ICCID') || tagged(iccidB,'+CCID') || useful(iccidA).find(v=>/^\d{15,24}$/.test(v)) || useful(iccidB).find(v=>/^\d{15,24}$/.test(v)) || '未知';
-          const phone = tagged(number,'+CNUM').split(',').map(v=>v.replace(/"/g,'').trim()).filter(Boolean).pop() || '未知';
-          const networkMode = tagged(rat, '+PSRAT') || '未知';
-          const ipv4 = (ip.match(/\+CGPADDR:\s*1,"([0-9.]+)"/) || [,'未知'])[1];
-          const ipv6 = (ip.match(/\+CGPADDR:\s*1,"[^"]*","([^"]+)"/) || [,'未知'])[1];
-          document.getElementById('device').innerHTML = line('模组厂商', atiLines[0] || 'Fibocom') + line('模组型号', atiLines[1] || 'FM150') + line('模组固件信息', atiLines.slice(2).join(' / ') || '见下方 ATI 返回') + line('IMEI', imei) + line('IMSI', imsiValue) + line('ICCID', iccidValue) + line('本机号码', phone) + line('当前网络模式', networkMode) + line('移动数据 IPv4', ipv4) + line('移动数据 IPv6', ipv6) + line('网页服务版本', serviceVersion);
-          document.getElementById('ati').textContent = ati.trim(); document.getElementById('notice').textContent = '设备信息已更新。';
-        } catch (e) { document.getElementById('notice').textContent = '读取失败：AT 服务暂时忙碌，请点击“刷新”自动重试。'; }
-        finally { refreshing = false; document.getElementById('refresh').disabled = false; }
-      }
-      document.getElementById('copyright-year').textContent = new Date().getFullYear();
-      document.getElementById('refresh').onclick = refresh; refresh();
-    </script>
-  </body>
-</html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FM150 设备信息</title><link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/bootstrap.min.css"><script src="js/bootstrap.bundle.min.js"></script>
+</head>
+<body><main class="container my-4">
+  <nav class="navbar navbar-expand-lg mt-2"><div class="container-fluid"><a class="navbar-brand" href="/"><span class="mb-0 h4">FM150 模块管理</span></a><div class="navbar-nav ms-3"><a class="nav-link" href="/">首页</a><a class="nav-link" href="/network.html">网络</a><a class="nav-link" href="/scanner.html">扫描</a><a class="nav-link" href="/settings.html">设置</a><a class="nav-link" href="/sms.html">短信</a><a class="nav-link" href="/fm150.html">FM150 AT</a><a class="nav-link" href="/console">终端</a><a class="nav-link active" href="/deviceinfo.html">设备信息</a></div></div></nav>
+  <div id="notice" class="alert alert-secondary mt-4">本页不会自动发送 AT 指令。请按项目单独读取，避免占用 FM150 AT 通道。</div>
+  <div class="card mt-3"><div class="card-header d-flex justify-content-between align-items-center"><span>设备信息</span><button id="read-all" class="btn btn-outline-primary btn-sm">按顺序读取全部</button></div><div class="card-body"><div class="table-responsive"><table class="table align-middle mb-0"><tbody>
+    <tr><th>模组识别</th><td id="ati">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="ati">读取</button></td></tr>
+    <tr><th>IMEI</th><td id="imei">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="imei">读取</button></td></tr>
+    <tr><th>IMSI</th><td id="imsi">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="imsi">读取</button></td></tr>
+    <tr><th>ICCID</th><td id="iccid">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="iccid">读取</button></td></tr>
+    <tr><th>本机号码</th><td id="number">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="number">读取</button></td></tr>
+    <tr><th>网络模式</th><td id="rat">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="rat">读取</button></td></tr>
+    <tr><th>移动数据 IPv4 / IPv6</th><td id="ip">未读取</td><td><button class="btn btn-sm btn-outline-primary read" data-key="ip">读取</button></td></tr>
+    <tr><th>网页服务版本</th><td>FM150 WebUI v1.0.0</td><td>—</td></tr>
+    <tr><th>项目贡献者</th><td>AIxBits；参考：cachenow/quectel-webui、iamromulan/quectel-rgmii-toolkit</td><td>—</td></tr>
+  </tbody></table></div></div><div class="card-footer text-muted small">Copyright © 2024–<span id="year"></span> AIxBits. All rights reserved.</div></div>
+  <div class="card mt-3"><div class="card-header">最近一项 AT 返回</div><pre class="card-body mb-0" id="raw">尚未查询</pre></div>
+</main>
+<script>
+(()=>{
+const endpoint='/cgi-bin/fm150_at', $=id=>document.getElementById(id), pause=ms=>new Promise(r=>setTimeout(r,ms)); let busy=false;
+const val=(id,v)=>$(id).textContent=v||'未获取到';
+async function request(cmd){const c=new AbortController(),timer=setTimeout(()=>c.abort(),7000);try{const r=await fetch(endpoint+'?'+new URLSearchParams({atcmd:cmd}),{cache:'no-store',signal:c.signal});const out=await r.text();if(!r.ok||/another AT command is still running/i.test(out))throw Error('AT 通道忙');$('raw').textContent=out.trim();return out}finally{clearTimeout(timer)}}
+const digits=out=>(out.match(/(?:^|\n)\s*(\d{14,24})\s*(?:\n|$)/)||[, ''])[1];
+const tagged=(out,name)=>(out.match(new RegExp('^\\s*'+name.replace('+','\\+')+'\\s*:?\\s*(.*)$','m'))||[, ''])[1].replace(/"/g,'').trim();
+async function read(key){if(busy)return;busy=true;$('notice').textContent='正在读取：'+key+'…';try{let out,value;
+ if(key==='ati'){out=await request('ATI');value=out.split(/\r?\n/).filter(x=>x.trim()&&x.trim()!=='OK'&&!/^AT/i.test(x)).join(' / ')}
+ if(key==='imei'){out=await request('AT+CGSN');value=digits(out)||tagged(out,'+CGSN');if(!value){out=await request('AT+GTSN=0,7');value=digits(out)||tagged(out,'+GTSN')}}
+ if(key==='imsi'){out=await request('AT+CIMI');value=digits(out)}
+ if(key==='iccid'){out=await request('AT+ICCID');value=tagged(out,'+ICCID')||digits(out);if(!value){out=await request('AT+CCID');value=tagged(out,'+CCID')||digits(out)}}
+ if(key==='number'){out=await request('AT+CNUM');value=tagged(out,'+CNUM').split(',').map(x=>x.trim()).filter(Boolean).pop()}
+ if(key==='rat'){out=await request('AT+PSRAT?');value=tagged(out,'+PSRAT')}
+ if(key==='ip'){out=await request('AT+CGPADDR');const m=out.match(/\+CGPADDR:\s*1,"([^"]*)"(?:,"([^"]*)")?/);value=m?(m[1]+' / '+(m[2]||'无 IPv6')):''}
+ val(key,value);$('notice').textContent='已更新：'+key+'。';}catch(e){$('notice').textContent='读取失败：'+e.message+'。请稍后单独重试。'}finally{busy=false}}
+document.querySelectorAll('.read').forEach(b=>b.onclick=()=>read(b.dataset.key));
+$('read-all').onclick=async()=>{if(busy)return;for(const k of ['ati','imei','imsi','iccid','number','rat','ip']){await read(k);await pause(800)}};
+$('year').textContent=new Date().getFullYear();
+})();
+</script></body></html>

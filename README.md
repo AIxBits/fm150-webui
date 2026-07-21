@@ -1,90 +1,60 @@
-# FM150 Web AT
+# FM150 WebUI
 
-面向 **Fibocom FM150-AE/NA-01** 5G 模组内部 Linux 环境的 Web AT 控制服务。
+面向 **Fibocom FM150-AE/NA-01** 的独立 Web 管理界面，运行在模组内部。
 
-本仓库是 [cachenow/quectel-webui](https://github.com/cachenow/quectel-webui) 的完整 Fork：保留原项目的 Simple Admin、`socat-at-bridge`、静态 `socat` 二进制及 systemd 单元；在此基础上增加 FM150 的 AT 页面、执行接口与部署脚本。
+它不依赖 Quectel WebUI、Simple Admin、Entware/OPKG、lighttpd 或 QMI 工具链。
 
-> 目标是已经能够进入 FM150 内部 Shell、并能使用 AT bridge 的设备。它不是 OpenWrt/QWRT 路由器端 LuCI 插件。
+## 功能
 
-## FM150 功能
+- 首页：SIM、温度、网络模式、APN、IPv4、服务小区和运营商信息。
+- 网络：FM150 的 `GTACT`、`GTDUALSIM`、`GTRNDIS`、`GTUSBMODE?` 管理。
+- 扫描：`AT+GTCCINFO?` 服务/邻区信息。
+- 设置：FM150 网络制式、SIM、ECM 与 USB 模式。
+- 短信：保留标准 3GPP SMS AT 工作流，并修正 UCS2 发件人显示。
+- 设备信息：按项目单独读取 ATI、IMEI、IMSI、ICCID、号码与 PDP 地址，避免并发占用 AT 串口。
+- FM150 AT：预设 FM150 指令与原始回显。
 
-- 默认首页：自动显示 FM150 的 SIM、运营商、PDP 地址、网络制式、小区、信号与温度
-- Web 页面：`/fm150.html`（预设与自定义 AT）
-- FM150 专用状态：`AT+GTCCINFO?`、`AT+GTCAINFO?`、`AT+PSRAT?`、`AT+GTUSBMODE?`、`AT+MTSM`
-- 常用查询：`ATI`、`CPIN?`、`CSQ`、`CESQ`、`COPS?`、`CGDCONT?`、`CGPADDR`、`CGSN`、`CBC`
-- 控制：SIM 切换、4G/5G/自动搜网、ECM 拨号、USB 网络模式、模块重启
-- 自定义单行 AT 命令
+不发送移远专用的 `AT+Q*` 指令；未验证存在 FM150 等价命令的移远功能不会被伪造或映射。
 
-执行接口会串行化 AT 请求，并限制单次运行时间。Web 页面一次只发送一条命令；不要用分号将多个查询串联，否则 AT bridge 可能在第一个 `OK` 后截断后续回包。
+## 一键部署
 
-## 已验证的 AT bridge
-
-本项目以 FM150 实机验证的以下路径为默认值：
-
-```text
-/usrdata/socat-at-bridge/atcmd11  -> /dev/ttyOUT -> /dev/smd9
-```
-
-安装前先确认：
+在 FM150 模组的 root shell 中运行：
 
 ```sh
-ls -l /dev/ttyOUT /dev/smd9
-/usrdata/socat-at-bridge/atcmd11 'AT+GTCCINFO?;+GTCAINFO?'
+cd /tmp && \
+wget -O fm150-webui-install.sh https://raw.githubusercontent.com/AIxBits/fm150-webui/main/install.sh && \
+chmod +x fm150-webui-install.sh && \
+./fm150-webui-install.sh
 ```
 
-完整 bridge 内容保留在 [`socat-at-bridge/`](socat-at-bridge/)，但本部署不会重建它。实机验证的 AT 通道为 `/dev/smd9`，由原有 `ttyIN/ttyOUT` 和 `atcmd11` 提供。原项目中名称为 `socat-smd11*` 的服务，在 FM150 上只需把两条转发命令的设备节点改为 `/dev/smd9`；不要为了适配网页而替换已工作的 bridge。
+安装程序会：
 
-## 完整部署（Web 服务）
+1. 将网站安装到 `/usrdata/fm150-webui/www`。
+2. 安装并启动运行所需服务组件。
+3. 安装一个 BusyBox `httpd` 服务；默认端口为 **8080**。
+4. 不修改或覆盖现有 Quectel WebUI、lighttpd、OPKG、Tailscale、TTL 或防火墙配置。
 
-前提：设备已经有可用的 Simple Admin/Lighttpd，以及已验证的 FM150 AT bridge（`atcmd11`）。完整部署只部署网页和 CGI，不会停止、覆盖或重启 AT bridge。
+默认访问地址为：`http://<模组 bridge0 IP>:8080/`。例如模组地址为 `192.168.225.1` 时，使用 `http://192.168.225.1:8080/`。
 
-```sh
-cd /tmp
-wget -O FM150_webui_toolkit.sh \
-  https://raw.githubusercontent.com/AIxBits/fm150-webui/main/FM150_webui_toolkit.sh
-chmod +x FM150_webui_toolkit.sh
-FM150_WEBUI_BASE_URL=https://raw.githubusercontent.com/AIxBits/fm150-webui/main/simpleadmin/www \
-  ./FM150_webui_toolkit.sh full-install
-```
+> Web 页面允许发送经过页面功能限定的 AT 指令。请仅在受信任的本地网络中使用；如需公网访问，请自行在上层网络配置认证和访问控制。
 
-安装后访问：
+## 已验证的 FM150 指令
 
-```text
-https://<FM150 管理地址>/fm150.html
-```
+| 用途 | 指令 |
+| --- | --- |
+| 网络模式 | `AT+GTACT=2`、`AT+GTACT=14`、`AT+GTACT=20` |
+| 服务小区 | `AT+GTCCINFO?` |
+| 网络制式 | `AT+PSRAT?` |
+| SIM | `AT+CPIN?`、`AT+GTDUALSIM=0/1` |
+| PDP / 地址 | `AT+CGDCONT?`、`AT+CGPADDR` |
+| USB / ECM | `AT+GTUSBMODE?`、`AT+GTRNDIS=1,1`、`AT+GTRNDIS=0,1` |
+| 温度 | `AT+MTSM=1,6` |
+| 设备识别 | `ATI`、`AT+CGSN`、`AT+GTSN=0,7` |
 
-部署完成后可检查服务状态：
+## 项目归属与参考
 
-```sh
-./FM150_webui_toolkit.sh check
-```
+维护：**AIxBits**。
 
-## 风险提示
+实现参考：[cachenow/quectel-webui](https://github.com/cachenow/quectel-webui) 的页面组织方式，以及 [iamromulan/quectel-rgmii-toolkit](https://github.com/iamromulan/quectel-rgmii-toolkit) 的桥接思路；本仓库只保留 FM150 所需实现。
 
-下列命令会造成断网、USB 重新枚举或当前 Web 会话中断：
-
-- `AT+GTUSBMODE=...`
-- `AT+GTACT=...`
-- `AT+GTDUALSIM=...`
-- `AT+CFUN=...`
-
-IMEI 写入不提供一键功能。只应在合法维修场景下，通过自定义 AT 命令并自行确认后操作。
-
-## 目录
-
-```text
-FM150_webui_toolkit.sh       FM150 完整部署与状态检查
-FM150_DEPLOY.md              详细部署说明
-simpleadmin/www/fm150.html   FM150 Web 页面
-simpleadmin/www/cgi-bin/fm150_at  安全的 AT CGI 接口
-socat-at-bridge/             原始 bridge、AT 客户端、静态 socat 与 systemd 单元
-```
-
-## 参考与致谢
-
-- [cachenow/quectel-webui](https://github.com/cachenow/quectel-webui)：完整上游项目、Simple Admin 和 bridge 基础。
-- [iamromulan/quectel-rgmii-toolkit](https://github.com/iamromulan/quectel-rgmii-toolkit)：RGMII 工具链参考。
-- [FUjr/QModem](https://github.com/FUjr/QModem)：QWRT 中 Fibocom AT 预设的上游来源。
-- [obsy/packages 的 FM150 状态解析](https://github.com/obsy/packages/blob/d190c4af80f8a973ff2220c3aa1c0bbe63b3909e/easyconfig/files/usr/share/easyconfig/modem/addon/2cb70104)：`GTCCINFO` / `GTCAINFO` 的 OpenWrt 实际解析参考。
-
-原项目及其第三方组件的许可、署名与使用限制仍然适用。
+Copyright © 2024–2026 AIxBits. All rights reserved.

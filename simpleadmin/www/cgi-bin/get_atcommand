@@ -1,4 +1,4 @@
 #!/bin/bash
-# Compatibility entry point for legacy pages. All AT traffic is sent through
-# the FM150-safe CGI endpoint (atcmd11 -> ttyOUT -> smd9).
-exec /usrdata/simpleadmin/www/cgi-bin/fm150_at
+# Compatibility entry point for legacy pages.  Resolve its sibling so the
+# standalone installation does not depend on a Simple Admin path.
+exec "$(dirname "$0")/fm150_at"

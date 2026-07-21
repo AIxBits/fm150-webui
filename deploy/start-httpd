@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+WEB_ROOT=${FM150_WEBUI_ROOT:-/usrdata/fm150-webui/www}
+PORT=${FM150_WEBUI_PORT:-8080}
+for busybox in /bin/busybox.nosuid /bin/busybox /usr/bin/busybox; do
+    if [ -x "$busybox" ]; then
+        exec "$busybox" httpd -f -p "$PORT" -h "$WEB_ROOT"
+    fi
+done
+echo 'BusyBox httpd was not found.' >&2
+exit 1

@@ -4,6 +4,10 @@
 
 它不依赖 Quectel WebUI、Simple Admin、Entware/OPKG、lighttpd 或 QMI 工具链。
 
+## 页面预览
+
+![FM150 WebUI 首页：网络与服务小区状态](docs/images/fm150-dashboard.png)
+
 ## 功能
 
 - 首页：SIM、温度、网络模式、APN、IPv4、服务小区和运营商信息。

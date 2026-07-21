@@ -1,0 +1,14 @@
+[Unit]
+Description=FM150 standalone WebUI
+After=network.target socat-smd9.service
+Wants=socat-smd9.service
+
+[Service]
+Type=simple
+Environment=FM150_WEBUI_PORT=8080
+ExecStart=/usrdata/fm150-webui/bin/start-httpd
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

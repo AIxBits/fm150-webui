@@ -18,8 +18,6 @@
 - 设备信息：按项目单独读取 ATI、IMEI、IMSI、ICCID、号码与 PDP 地址，避免并发占用 AT 串口。
 - FM150 AT：预设 FM150 指令与原始回显。
 
-不发送移远专用的 `AT+Q*` 指令；未验证存在 FM150 等价命令的移远功能不会被伪造或映射。
-
 ## 一键部署
 
 在 FM150 模组的 root shell 中运行：
@@ -36,7 +34,6 @@ chmod +x fm150-webui-install.sh && \
 1. 将网站安装到 `/usrdata/fm150-webui/www`。
 2. 安装并启动运行所需服务组件。
 3. 安装一个 BusyBox `httpd` 服务；默认端口为 **8080**。
-4. 不修改或覆盖现有 Quectel WebUI、lighttpd、OPKG、Tailscale、TTL 或防火墙配置。
 
 默认访问地址为：`http://<模组 bridge0 IP>:8080/`。例如模组地址为 `192.168.225.1` 时，使用 `http://192.168.225.1:8080/`。
 

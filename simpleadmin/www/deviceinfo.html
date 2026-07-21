@@ -29,7 +29,7 @@ const digits=out=>(out.match(/(?:^|\n)\s*(\d{14,24})\s*(?:\n|$)/)||[, ''])[1];
 const tagged=(out,name)=>(out.match(new RegExp('^\\s*'+name.replace('+','\\+')+'\\s*:?\\s*(.*)$','m'))||[, ''])[1].replace(/"/g,'').trim();
 function normalIpv6(value){const p=value.split('.');if(p.length!==16||p.some(x=>!/^\d+$/.test(x)||+x>255))return value;const groups=[];for(let i=0;i<16;i+=2)groups.push(((+p[i]<<8)+ +p[i+1]).toString(16));let bestStart=-1,bestLen=0;for(let i=0;i<groups.length;){if(groups[i]!=='0'){i++;continue}let j=i;while(j<groups.length&&groups[j]==='0')j++;if(j-i>bestLen){bestStart=i;bestLen=j-i}i=j}if(bestLen<2)return groups.join(':');const left=groups.slice(0,bestStart).join(':'),right=groups.slice(bestStart+bestLen).join(':');return left&&right?left+'::'+right:left?left+'::':'::'+right}
 async function read(key){if(busy)return;busy=true;$('notice').textContent='正在读取：'+key+'…';try{let out,value;
- if(key==='ati'){out=await request('ATI');value=out.split(/\r?\n/).filter(x=>x.trim()&&x.trim()!=='OK'&&!/^AT/i.test(x)).join(' / ')}
+ if(key==='ati'){out=await request('ATI');value=/FM150/i.test(out)?'Fibocom FM150':'FM150'}
  if(key==='imei'){out=await request('AT+CGSN');value=digits(out)||tagged(out,'+CGSN');if(!value){out=await request('AT+GTSN=0,7');value=digits(out)||tagged(out,'+GTSN')}}
  if(key==='imsi'){out=await request('AT+CIMI');value=digits(out)}
  if(key==='iccid'){out=await request('AT+ICCID');value=tagged(out,'+ICCID')||digits(out);if(!value){out=await request('AT+CCID');value=tagged(out,'+CCID')||digits(out)}}

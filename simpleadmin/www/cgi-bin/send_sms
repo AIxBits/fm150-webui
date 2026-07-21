@@ -1,31 +1,30 @@
 #!/bin/bash
-QUERY_STRING=$(echo "${QUERY_STRING}" | sed 's/;//g')
+# SMS sender for the FM150 ttyOUT endpoint.  The web page supplies UCS2 hex.
+printf 'Content-Type: text/plain; charset=utf-8\r\n\r\n'
+
 urldecode() {
-    local data
-    data="${*//+/ }"
-    echo -e "${data//%/\\x}"
+    local value="${1//+/ }"
+    printf '%b' "$(printf '%s' "$value" | sed 's/%/\\x/g')"
 }
 
-if [ "${QUERY_STRING}" ]; then
-    export IFS="&"
-    for cmd in ${QUERY_STRING}; do
-        if [[ "$cmd" == *=* ]]; then
-            key=$(echo "$cmd" | awk -F '=' '{print $1}')
-            value=$(echo "$cmd" | awk -F '=' '{print $2}')
-            eval "$key"="$(urldecode "$value")"
-        fi
-    done
-fi
+number= msg=
+for part in $(printf '%s' "$QUERY_STRING" | tr '&' ' '); do
+    key=${part%%=*}; value=${part#*=}
+    case "$key" in
+        number) number=$(urldecode "$value") ;;
+        msg) msg=$(urldecode "$value") ;;
+    esac
+done
 
-phone_number="$number"
-message_encoded="$msg"
+case "$number" in ''|*[!0-9A-Fa-f]*) echo 'ERROR: invalid recipient'; exit 1;; esac
+case "$msg" in ''|*[!0-9A-Fa-f]*) echo 'ERROR: invalid UCS2 message'; exit 1;; esac
 
-
-send_at_command() {
-    local cmd=$1
-    echo -en "$cmd\r" | microcom -t 100 /dev/ttyOUT2
-}
-
-send_at_command "AT+CMGS=\"$phone_number\","$Command""
-runcmd=$((echo -en "$message_encoded"; echo -en "\x1A") | microcom -t 500 /dev/ttyOUT2)
-echo "$runcmd"
+MICROCOM=/usr/bin/microcom
+[ -x "$MICROCOM" ] || MICROCOM=microcom
+{
+    printf 'AT+CMGF=1\rAT+CSCS="UCS2"\r'
+    sleep 1
+    printf 'AT+CMGS="%s"\r' "$number"
+    sleep 1
+    printf '%s\032' "$msg"
+} | "$MICROCOM" -t 10000 /dev/ttyOUT

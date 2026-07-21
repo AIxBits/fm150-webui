@@ -24,8 +24,9 @@
 </main>
 <script>
 (()=>{const $=id=>document.getElementById(id),set=(id,v)=>$(id).textContent=v||"未知";
-const at=c=>fetch("/cgi-bin/fm150_at?"+new URLSearchParams({atcmd:c})).then(async r=>{const t=await r.text();if(!r.ok||/(^|\n)ERROR(?=$|\n|:)/.test(t))throw Error(t);return t});
-const safe=async c=>{try{return await at(c)}catch(_){return""}},cap=(t,r,d="未知")=>{const m=t.match(r);return m&&m[1]?m[1].trim():d};let busy=false;
+const pause=ms=>new Promise(done=>setTimeout(done,ms));
+const at=async c=>{const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),12000);try{const r=await fetch("/cgi-bin/fm150_at?"+new URLSearchParams({atcmd:c}),{signal:abort.signal});const t=await r.text();if(!r.ok||/(^|\n)ERROR(?=$|\n|:)/.test(t))throw Error(t);return t}finally{clearTimeout(timer)}};
+const safe=async c=>{for(let tryNo=0;tryNo<2;tryNo++){try{return await at(c)}catch(_){if(tryNo===0)await pause(1200)}}return""},cap=(t,r,d="未知")=>{const m=t.match(r);return m&&m[1]?m[1].trim():d};let busy=false;
 async function refresh(){if(busy)return;busy=true;$("refresh").disabled=true;$("notice").textContent="正在读取 FM150 状态…";
 const cpin=await safe("AT+CPIN?");set("simStatus",cpin.includes("+CPIN: READY")?"已就绪":cpin.includes("NOT INSERTED")?"无 SIM 卡":"未知");
 const csqT=await safe("AT+CSQ"),csq=cap(csqT,/\+CSQ:\s*([0-9]+,[0-9]+)/);set("csq",csq);set("signal",csq==="99,99"?"NR5G":csq);
@@ -40,4 +41,3 @@ try{const t=await fetch("/cgi-bin/get_uptime").then(r=>r.text());set("uptime",ca
 $("updated").textContent="更新时间："+new Date().toLocaleString();$("notice").textContent="FM150 状态已更新。";$("refresh").disabled=false;busy=false}
 $("refresh").onclick=refresh;refresh();setInterval(refresh,15000)})();
 </script></body></html>
-

@@ -1882,7 +1882,9 @@
               this.csq = `${csqMatch[1]},${csqMatch[2]}`;
               const rssi = Number(csqMatch[1]);
               this.signalPercentage = rssi >= 0 && rssi <= 31 ? String(Math.round(rssi * 100 / 31)) : "0";
-              this.signalAssessment = rssi === 99 ? "Unknown" : (rssi >= 20 ? "Good" : rssi >= 10 ? "Fair" : "Weak");
+              this.signalAssessment = rssi === 99
+                ? "NR5G: CSQ unavailable"
+                : (rssi >= 20 ? "Good" : rssi >= 10 ? "Fair" : "Weak");
             }
 
             const cops = await read("AT+COPS?");
@@ -1891,7 +1893,7 @@
             const pdp = await read("AT+CGDCONT?");
             this.apn = this.value(pdp, /\+CGDCONT:\s*\d+,"[^"]+","([^"]*)"/, "Unknown");
             const address = await read("AT+CGPADDR");
-            this.ipv4 = this.value(address, /\+CGPADDR:\s*\d+,([0-9.]+)/, "--");
+            this.ipv4 = this.value(address, /\+CGPADDR:\s*\d+,"?([0-9.]+)"?/, "--");
             this.internetConnectionStatus = this.ipv4 !== "--" && this.ipv4 !== "0.0.0.0" ? "Connected" : "Disconnected";
 
             const rat = await read("AT+PSRAT?");

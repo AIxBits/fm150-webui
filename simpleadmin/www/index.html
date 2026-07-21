@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="zh-CN" data-bs-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,7 +23,7 @@
   </head>
   <body>
     <main>
-      <div class="container my-4" x-data="processAllInfos()">
+      <div class="container my-4" x-data="processAllInfos()" x-init="init()">
         <nav class="navbar navbar-expand-lg mt-2">
           <div class="container-fluid">
             <a class="navbar-brand" href="/"
@@ -44,7 +44,7 @@
               <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                   <a class="nav-link active" aria-current="page" href="/"
-                    >Home</a
+                    >首页</a
                   >
                 </li>
                 <li class="nav-item">
@@ -55,6 +55,9 @@
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="/settings.html">Simple Settings</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/fm150.html">FM150 AT</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="/sms.html">SMS</a>
@@ -99,7 +102,7 @@
                   x-text="temperature + ' &deg;C'"
                 ></h1>
               </div>
-              <div class="card-footer">Temperature</div>
+              <div class="card-footer">模块温度</div>
             </div>
           </div>
 
@@ -121,7 +124,7 @@
                 </svg>
                 <h1 class="card-text mt-4" x-text="simStatus"></h1>
               </div>
-              <div class="card-footer">SIM Status</div>
+              <div class="card-footer">SIM 卡状态</div>
             </div>
           </div>
 
@@ -143,7 +146,7 @@
                 </svg>
                 <h1 class="card-text mt-4" x-text="signalPercentage + '%'"></h1>
               </div>
-              <div class="card-footer">Signal Percentage</div>
+              <div class="card-footer">信号强度</div>
             </div>
           </div>
 
@@ -168,7 +171,7 @@
                   x-text="internetConnectionStatus"
                 ></h1>
               </div>
-              <div class="card-footer">Internet Connection</div>
+              <div class="card-footer">网络状态</div>
             </div>
           </div>
         </div>
@@ -176,17 +179,17 @@
         <div class="row mt-5 gap-3">
           <div class="col">
             <div class="card">
-              <div class="card-header">Network Information</div>
+              <div class="card-header">网络信息</div>
               <div class="card-body">
                 <div class="card-text table-responsive-sm">
                   <table class="table">
                     <tbody>
                       <tr>
-                        <th scope="row">Active Sim</th>
+                        <th scope="row">SIM 卡</th>
                         <td x-text="activeSim"></td>
                       </tr>
                       <tr>
-                        <th scope="row">Network Provider</th>
+                        <th scope="row">运营商</th>
                         <td x-text="networkProvider"></td>
                       </tr>
                       <tr>
@@ -198,15 +201,15 @@
                         <td x-text="apn"></td>
                       </tr>
                       <tr>
-                        <th scope="row">Network Mode</th>
+                        <th scope="row">网络模式</th>
                         <td x-text="networkMode"></td>
                       </tr>
                       <tr>
-                        <th scope="row">Bands</th>
+                        <th scope="row">频段</th>
                         <td x-text="bands"></td>
                       </tr>
                       <tr>
-                        <th scope="row">Bandwidth</th>
+                        <th scope="row">带宽</th>
                         <td x-text="bandwidth"></td>
                       </tr>
                       <tr>
@@ -231,7 +234,7 @@
                         <td x-text="ipv6"></td>
                       </tr>
                       <tr>
-                        <th scope="row">Uptime</th>
+                        <th scope="row">在线时长</th>
                         <td x-text="uptime"></td>
                       </tr>
                     </tbody>
@@ -269,17 +272,17 @@
 
           <div class="col">
             <div class="card">
-              <div class="card-header">Signal Information</div>
+              <div class="card-header">信号</div>
               <div class="card-body">
                 <div class="card-text table-responsive-sm">
                   <table class="table">
                     <tbody>
                       <tr>
-                        <th scope="row">Assesment</th>
+                        <th scope="row">评估</th>
                         <td x-text="signalAssessment"></td>
                       </tr>
                       <tr>
-                        <th scope="row">Traffic Stats</th>
+                        <th scope="row">流量统计</th>
                         <td
                           x-text="downloadStat + ' DL / ' + uploadStat + ' UL'"
                         ></td>
@@ -592,7 +595,7 @@
                   <div class="row">
                     <div class="col">
                       <div>
-                        <p>Date Updated</p>
+                      <p>更新时间</p>
                       </div>
                     </div>
 
@@ -1846,15 +1849,15 @@
          /cgi-bin/fm150_at (atcmd11 -> ttyOUT -> smd9). */
       function processAllInfos() {
         return {
-          internetConnectionStatus: "Unknown", temperature: "--", simStatus: "Unknown",
-          activeSim: "Unknown", networkProvider: "N/A", mccmnc: "N/A", apn: "Unknown",
-          networkMode: "Unknown", bands: "Unknown", bandwidth: "Unknown", earfcns: "Unknown",
-          pccPCI: "Unknown", sccPCI: "-", ipv4: "--", ipv6: "--", uptime: "FM150",
-          cellID: "Unknown", eNBID: "Unknown", tac: "Unknown", csq: "-",
+          internetConnectionStatus: "未知", temperature: "--", simStatus: "未知",
+          activeSim: "未知", networkProvider: "未知", mccmnc: "未知", apn: "未知",
+          networkMode: "未知", bands: "未知", bandwidth: "未知", earfcns: "未知",
+          pccPCI: "未知", sccPCI: "-", ipv4: "--", ipv6: "--", uptime: "未知",
+          cellID: "未知", eNBID: "未知", tac: "未知", csq: "-",
           rsrpLTE: "-", rsrpNR: "-", rsrqLTE: "-", rsrqNR: "-", sinrLTE: "-", sinrNR: "-",
           rsrpLTEPercentage: "0", rsrpNRPercentage: "0", rsrqLTEPercentage: "0",
           rsrqNRPercentage: "0", sinrLTEPercentage: "0", sinrNRPercentage: "0",
-          signalPercentage: "0", signalAssessment: "Unknown", downloadStat: "N/A",
+          signalPercentage: "0", signalAssessment: "未知", downloadStat: "N/A",
           uploadStat: "N/A", nrDownload: "0", nrUpload: "0", nonNrDownload: "0",
           nonNrUpload: "0", lastUpdate: "--", refreshRate: 15, newRefreshRate: null,
           intervalId: null, busy: false,
@@ -1874,7 +1877,7 @@
             this.busy = true;
             const read = async (command) => { try { return await this.at(command); } catch (_) { return ""; } };
             const cpin = await read("AT+CPIN?");
-            this.simStatus = cpin.includes("+CPIN: READY") ? "Ready" : (cpin.includes("NOT INSERTED") ? "No SIM" : "Unknown");
+            this.simStatus = cpin.includes("+CPIN: READY") ? "已就绪" : (cpin.includes("NOT INSERTED") ? "无 SIM 卡" : "未知");
 
             const csq = await read("AT+CSQ");
             const csqMatch = csq.match(/\+CSQ:\s*(\d+),(\d+)/);
@@ -1883,38 +1886,44 @@
               const rssi = Number(csqMatch[1]);
               this.signalPercentage = rssi >= 0 && rssi <= 31 ? String(Math.round(rssi * 100 / 31)) : "0";
               this.signalAssessment = rssi === 99
-                ? "NR5G: CSQ unavailable"
-                : (rssi >= 20 ? "Good" : rssi >= 10 ? "Fair" : "Weak");
+                ? "NR5G 下 CSQ 不可用"
+                : (rssi >= 20 ? "良好" : rssi >= 10 ? "一般" : "较弱");
             }
 
             const cops = await read("AT+COPS?");
-            this.networkProvider = this.value(cops, /\+COPS:\s*\d+,\d+,"([^"]+)"/, "N/A");
+            this.networkProvider = this.value(cops, /\+COPS:\s*\d+,\d+,"([^"]+)"/, "未知");
 
             const pdp = await read("AT+CGDCONT?");
-            this.apn = this.value(pdp, /\+CGDCONT:\s*\d+,"[^"]+","([^"]*)"/, "Unknown");
+            this.apn = this.value(pdp, /\+CGDCONT:\s*\d+,"[^"]+","([^"]*)"/, "未知");
             const address = await read("AT+CGPADDR");
             this.ipv4 = this.value(address, /\+CGPADDR:\s*\d+,"?([0-9.]+)"?/, "--");
             this.internetConnectionStatus = this.ipv4 !== "--" && this.ipv4 !== "0.0.0.0" ? "Connected" : "Disconnected";
 
             const rat = await read("AT+PSRAT?");
-            this.networkMode = this.value(rat, /\+PSRAT:\s*([^\r\n]+)/, "Unknown");
+            this.networkMode = this.value(rat, /\+PSRAT:\s*([^\r\n]+)/, "未知");
             const cell = await read("AT+GTCCINFO?");
             const cellLine = cell.split(/\r?\n/).find((line) => /^\d+,\d+,\d{3},/.test(line.trim()));
             if (cellLine) {
               const fields = cellLine.trim().split(",");
               this.mccmnc = `${fields[2] || ""}${fields[3] || ""}` || "N/A";
-              this.tac = fields[4] || "Unknown";
-              this.cellID = fields[5] || "Unknown";
-              this.pccPCI = fields[6] || "Unknown";
-              this.eNBID = fields[5] || "Unknown";
+              this.tac = fields[4] || "未知";
+              this.cellID = fields[5] || "未知";
+              this.pccPCI = fields[6] || "未知";
+              this.eNBID = fields[5] || "未知";
               this.networkMode = cell.includes("NR service cell") ? "NR 5G" : (cell.includes("LTE service cell") ? "LTE 4G" : this.networkMode);
               this.bands = cell.includes("NR service cell") ? `NR band ${fields[1] || "?"}` : `LTE band ${fields[1] || "?"}`;
-              this.earfcns = fields[8] || "Unknown";
+              this.earfcns = fields[8] || "未知";
             }
             const temp = await read("AT+MTSM=1,6");
             const tempLine = temp.split(/\r?\n/).find((line) => /MTSM|TEMP/i.test(line) && !line.startsWith("AT+"));
             const degrees = tempLine && tempLine.match(/-?\d+(?:\.\d+)?/g);
             if (degrees && degrees.length) this.temperature = degrees[degrees.length - 1];
+            try {
+              const uptimeResponse = await fetch("/cgi-bin/get_uptime");
+              const uptimeText = await uptimeResponse.text();
+              const match = uptimeText.match(/\bup\s+(.+?)(?:,\s+\d+\s+user|\s+load average|$)/i);
+              if (match) this.uptime = match[1].trim();
+            } catch (_) { /* Keep the previous value if uptime is unavailable. */ }
             this.lastUpdate = new Date().toLocaleString();
             this.busy = false;
           },
@@ -1932,7 +1941,5 @@
         };
       }
     </script>
-  </body>
-</html>
   </body>
 </html>

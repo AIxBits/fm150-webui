@@ -68,7 +68,8 @@ install() {
     download "$BASE_URL/index.html" "$INDEX"
     download "$BASE_URL/fm150.html" "$WEB_ROOT/fm150.html"
     download "$BASE_URL/cgi-bin/fm150_at" "$CGI_ROOT/fm150_at"
-    chmod 0755 "$CGI_ROOT/fm150_at"
+    download "$BASE_URL/cgi-bin/get_atcommand" "$CGI_ROOT/get_atcommand"
+    chmod 0755 "$CGI_ROOT/fm150_at" "$CGI_ROOT/get_atcommand"
 
     # index.html is the FM150 dashboard and already contains the FM150 AT link.
 

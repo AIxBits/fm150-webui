@@ -220,7 +220,9 @@
           while ((match = cmglRegex.exec(data)) !== null) {
             const index = parseInt(match[1]);
             const senderHex = match[2];
-            const sender = senderHex.startsWith("003") ? this.convertHexToText(senderHex) : senderHex;
+            // FM150 returns the sender with AT+CSCS="UCS2".  A phone number
+            // beginning with "+" therefore starts with 002B, not 003.
+            const sender = this.isUcs2Hex(senderHex) ? this.convertHexToText(senderHex) : senderHex;
             const dateStr = match[3].replace(/\+\d{2}$/, "");
             const date = this.parseCustomDate(dateStr);
             if (isNaN(date)) {
@@ -254,6 +256,10 @@
         convertHexToText(hex) {
           const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
           return new TextDecoder('utf-16be').decode(bytes);
+        },
+
+        isUcs2Hex(value) {
+          return /^[0-9a-fA-F]+$/.test(value) && value.length >= 4 && value.length % 4 === 0;
         },
 
         // 自定义解析日期函数

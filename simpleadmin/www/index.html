@@ -4,7 +4,7 @@
 <title>FM150 模块管理</title><link rel="stylesheet" href="css/bootstrap.min.css"><link rel="stylesheet" href="css/styles.css">
 <style>.metric{min-height:175px}.metric-value{font-size:clamp(2rem,5vw,3.5rem);font-weight:700}pre{white-space:pre-wrap}</style>
 </head><body><main class="container my-4">
-<nav class="navbar navbar-expand-lg mb-4"><a class="navbar-brand h4 mb-0" href="/">FM150 模块管理</a><div class="navbar-nav ms-3"><a class="nav-link active" href="/">首页</a><a class="nav-link" href="/fm150.html">FM150 AT</a><a class="nav-link" href="/console">终端</a></div><button id="refresh" class="btn btn-outline-primary ms-auto">刷新</button></nav>
+<nav class="navbar navbar-expand-lg mb-4"><a class="navbar-brand h4 mb-0" href="/">FM150 模块管理</a><div class="navbar-nav ms-3"><a class="nav-link active" href="/">首页</a><a class="nav-link" href="/network.html">网络</a><a class="nav-link" href="/sms.html">短信</a><a class="nav-link" href="/fm150.html">FM150 AT</a><a class="nav-link" href="/console">终端</a></div><button id="refresh" class="btn btn-outline-primary ms-auto">刷新</button></nav>
 <div id="notice" class="alert alert-secondary py-2">正在读取 FM150 状态…</div>
 <section class="row g-3">
 <div class="col-6 col-lg-3"><div class="card metric text-center"><div class="card-body"><div class="metric-value" id="temperature">-- °C</div></div><div class="card-footer">模块温度</div></div></div>
@@ -34,8 +34,8 @@ const pdp=await safe("AT+CGDCONT?");set("apn",cap(pdp,/\+CGDCONT:\s*\d+,"[^"]+",
 const addr=await safe("AT+CGPADDR"),ip=cap(addr,/\+CGPADDR:\s*\d+,"?([0-9.]+)"?/);set("ipv4",ip);set("connection",ip!=="未知"&&ip!=="0.0.0.0"?"已连接":"未连接");
 const rat=await safe("AT+PSRAT?");set("rat",cap(rat,/\+PSRAT:\s*([^\r\n]+)/));
 const cell=await safe("AT+GTCCINFO?");$("rawCell").textContent=cell||"未收到小区信息";const line=cell.match(/(?:^|\n)(\d+,\d+,\d{3},[^\r\n]+)/);
-if(line){const f=line[1].split(",");set("mccmnc",f[2]+f[3]);set("cellType",cell.includes("NR service cell")?"NR 5G":cell.includes("LTE service cell")?"LTE 4G":"未知");set("tac",f[4]);set("cellId",f[5]);set("pci",f[6]);set("arfcn",f[8])}
-const cops=await safe("AT+COPS?"),op=cap(cops,/\+COPS:\s*\d+,\d+,"([^"]+)"/);set("operator",/\?/.test(op)?$("mccmnc").textContent:op);
+if(line){const f=line[1].split(","),plmn=f[2]+f[3],toDec=v=>/^[0-9A-F]+$/i.test(v)?String(parseInt(v,16)):v;set("mccmnc",plmn);set("cellType",cell.includes("NR service cell")?"NR 5G":cell.includes("LTE service cell")?"LTE 4G":"未知");set("tac",f[4]);set("cellId",toDec(f[6]));set("pci",toDec(f[7]));set("arfcn",f[8])}
+const cops=await safe("AT+COPS?"),op=cap(cops,/\+COPS:\s*\d+,\d+,"([^"]+)"/),plmn=$("mccmnc").textContent,carrier={"46000":"中国移动","46002":"中国移动","46004":"中国移动","46007":"中国移动","46008":"中国移动","46001":"中国联通","46006":"中国联通","46009":"中国联通","46003":"中国电信","46005":"中国电信","46011":"中国电信","46015":"中国广电"};set("operator",/\?/.test(op)?(carrier[plmn]||plmn):op);
 const temp=await safe("AT+MTSM=1,6"),deg=cap(temp,/\+MTSM:\s*(-?\d+(?:\.\d+)?)/,"");set("temperature",deg?deg+" °C":"-- °C");
 try{const t=await fetch("/cgi-bin/get_uptime").then(r=>r.text());set("uptime",cap(t,/\bup\s+(.+?)(?:,\s+\d+\s+user|\s+load average|$)/i))}catch(_){}
 $("updated").textContent="更新时间："+new Date().toLocaleString();$("notice").textContent="FM150 状态已更新。";$("refresh").disabled=false;busy=false}

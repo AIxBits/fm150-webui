@@ -27,7 +27,7 @@ case "$ATCMD" in
 esac
 
 # The verified FM150-AE/NA-01 AT channel is smd9, exposed by the existing
-# bridge as ttyOUT / atcmd11. Do not replace the user's bridge here.
+# bridge as ttyOUT / atcmd11.  Do not replace the user's bridge here.
 AT_BRIDGE=${FM150_AT_BRIDGE:-/usrdata/socat-at-bridge/atcmd11}
 if [ ! -x "$AT_BRIDGE" ]; then
     AT_BRIDGE=/bin/atcmd11
@@ -42,6 +42,18 @@ fi
 LOCK=/tmp/fm150-at.lock
 attempt=0
 until mkdir "$LOCK" 2>/dev/null; do
+    # A modem restart or an interrupted CGI can leave an empty lock directory.
+    # If its recorded owner no longer exists, reclaim it automatically.
+    if [ -r "$LOCK/pid" ]; then
+        owner=$(cat "$LOCK/pid" 2>/dev/null || true)
+        if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
+            rm -f "$LOCK/pid"
+            rmdir "$LOCK" 2>/dev/null || true
+            continue
+        fi
+    else
+        rmdir "$LOCK" 2>/dev/null || true
+    fi
     attempt=$((attempt + 1))
     if [ "$attempt" -ge 50 ]; then
         printf 'ERROR: another AT command is still running\n'
@@ -49,7 +61,8 @@ until mkdir "$LOCK" 2>/dev/null; do
     fi
     sleep 0.1
 done
-trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+printf '%s\n' "$$" > "$LOCK/pid"
+trap 'rm -f "$LOCK/pid"; rmdir "$LOCK" 2>/dev/null' EXIT
 
 printf '%s\n\n' "$ATCMD"
 # BusyBox timeout differs between FM150 firmware builds; invoking it as

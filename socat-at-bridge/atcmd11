@@ -1,69 +1,66 @@
 #!/bin/bash
+# FM150 smd9 bridge client.  The reader is always cleaned up: this is
+# essential when the command is invoked from a web CGI with a timeout.
 
-DEVICE=/dev/ttyOUT
-BAUD=115200
+DEVICE=${FM150_AT_DEVICE:-/dev/ttyOUT}
+BAUD=${FM150_AT_BAUD:-115200}
+WAIT_TENTHS=${FM150_AT_WAIT_TENTHS:-150} # fifteen seconds by default
 
-# Function to setup device communication parameters
 setup_device() {
-    stty -F $DEVICE cs8 $BAUD ignbrk -brkint -icrnl -imaxbel \
+    stty -F "$DEVICE" cs8 "$BAUD" ignbrk -brkint -icrnl -imaxbel \
         -opost -onlcr -isig -icanon -iexten -echo -echoe -echok \
         -echoctl -echoke noflsh -ixon -crtscts
 }
 
-# Function to send AT command and capture the output
 send_at_command() {
-    local command="$1"
-    
-    # Clear the device buffer before sending a new command
-    echo -n > $DEVICE
+    local command="$1" tmpfile reader_pid tries=0
+    tmpfile=$(mktemp) || return 1
+    reader_pid=
+    cleanup() {
+        if [ -n "$reader_pid" ]; then
+            kill "$reader_pid" 2>/dev/null || true
+            wait "$reader_pid" 2>/dev/null || true
+        fi
+        rm -f "$tmpfile"
+    }
+    trap cleanup EXIT INT TERM HUP
 
-    # Send the AT command, preserving the integrity of the input
-    echo -e "$command\r" > $DEVICE
+    # Start consuming the PTY before writing the command; otherwise a fast
+    # FM150 response can be missed between write and the old cat startup.
+    cat "$DEVICE" > "$tmpfile" &
+    reader_pid=$!
+    : > "$DEVICE"
+    printf '%s\r' "$command" > "$DEVICE"
 
-    # Use a temporary file to capture the command output
-    tmpfile=$(mktemp)
-    
-    # Start reading the device output to the temporary file
-    cat $DEVICE > "$tmpfile" &
-    CAT_PID=$!
-
-    # Monitor the output file for "OK" or "ERROR"
-    while ! grep -qe "OK" -e "ERROR" "$tmpfile"; do
-        sleep 1
+    while ! grep -qe 'OK' -e 'ERROR' "$tmpfile"; do
+        tries=$((tries + 1))
+        if [ "$tries" -ge "$WAIT_TENTHS" ]; then
+            printf 'ERROR: AT response timeout\n'
+            cleanup
+            trap - EXIT INT TERM HUP
+            return 1
+        fi
+        sleep 0.1
     done
 
-    # Kill the `cat` process after capturing the response
-    kill $CAT_PID
-    wait $CAT_PID 2>/dev/null
-
-    # Display the response
-    cat "$tmpfile" | while IFS= read -r line; do
-        echo -e "\033[0;32m$line\033[0m"
-    done
-
-    # Clean up
-    rm "$tmpfile"
+    kill "$reader_pid" 2>/dev/null || true
+    wait "$reader_pid" 2>/dev/null || true
+    reader_pid=
+    cat "$tmpfile"
+    trap - EXIT INT TERM HUP
+    rm -f "$tmpfile"
 }
 
-# Prepare the device for communication
-setup_device
+setup_device || exit 1
 
-# Check if an AT command is provided as an argument
-if [ $# -gt 0 ]; then
-    # Concatenate all arguments to handle commands with spaces and/or quotes correctly
-    FULL_CMD="$*"
-    send_at_command "$FULL_CMD"
+if [ "$#" -gt 0 ]; then
+    send_at_command "$*"
 else
-    echo -e "\033[0;36mType 'exit' to end the session.\033[0m"
-    while true; do
-        echo -en "\033[0;36mEnter AT Command: \033[0m"
-        read user_input
-
-        if [[ "$user_input" == "exit" ]]; then
-            echo -e "\033[0;32mExiting...\033[0m"
-            break
-        fi
-
+    printf "Type 'exit' to end the session.\n"
+    while :; do
+        printf 'Enter AT Command: '
+        IFS= read -r user_input || break
+        [ "$user_input" = 'exit' ] && break
         send_at_command "$user_input"
     done
 fi

@@ -57,3 +57,6 @@ chmod +x fm150-webui-install.sh && \
 实现参考：[cachenow/quectel-webui](https://github.com/cachenow/quectel-webui) 的页面组织方式，以及 [iamromulan/quectel-rgmii-toolkit](https://github.com/iamromulan/quectel-rgmii-toolkit) 的桥接思路；本仓库只保留 FM150 所需实现。
 
 Copyright © 2024–2026 AIxBits. All rights reserved.
+## 支持项目
+
+如果本项目对您的 FM150 使用有帮助，欢迎点击仓库右上角的 **Star** 支持项目，也欢迎反馈 FM150-AE/NA-01 的兼容性与使用体验。

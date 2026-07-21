@@ -38,13 +38,14 @@
           const imeiA = await atRetry('AT+CGSN');
           const imeiB = await atRetry('AT+GTSN=0,7');
           const imsi = await atRetry('AT+CIMI');
-          const iccid = await atRetry('AT+CCID');
+          const iccidA = await atRetry('AT+ICCID');
+          const iccidB = await atRetry('AT+CCID');
           const number = await atRetry('AT+CNUM');
           const rat = await atRetry('AT+PSRAT?');
           const ip = await atRetry('AT+CGPADDR');
           const atiLines = useful(ati), imei = useful(imeiA).find(v=>/^\d{14,17}$/.test(v)) || tagged(imeiA,'+CGSN') || useful(imeiB).find(v=>/^\d{14,17}$/.test(v)) || tagged(imeiB,'+GTSN') || '未获取到';
           const imsiValue = useful(imsi).find(v=>/^\d{10,20}$/.test(v)) || '未知';
-          const iccidValue = tagged(iccid,'+CCID') || useful(iccid).find(v=>/^\d{15,24}$/.test(v)) || '未知';
+          const iccidValue = tagged(iccidA,'+ICCID') || tagged(iccidB,'+CCID') || useful(iccidA).find(v=>/^\d{15,24}$/.test(v)) || useful(iccidB).find(v=>/^\d{15,24}$/.test(v)) || '未知';
           const phone = tagged(number,'+CNUM').split(',').map(v=>v.replace(/"/g,'').trim()).filter(Boolean).pop() || '未知';
           const networkMode = tagged(rat, '+PSRAT') || '未知';
           const ipv4 = (ip.match(/\+CGPADDR:\s*1,"([0-9.]+)"/) || [,'未知'])[1];

@@ -66,6 +66,6 @@ trap 'rm -f "$LOCK/pid"; rmdir "$LOCK" 2>/dev/null' EXIT
 
 printf '%s\n\n' "$ATCMD"
 ESC=$(printf '\033')
-# This firmware's BusyBox timeout applet accepts -t SECONDS COMMAND. The
-# five-second watchdog prevents a stuck AT request from holding the lock.
-timeout -t 5 "$AT_BRIDGE" "$ATCMD" | sed "s/${ESC}\\[[0-9;]*m//g" | tr -d '\r'
+# atcmd11 has its own five-second reader timeout and, unlike an external
+# timeout, reliably terminates its child reader before releasing the lock.
+"$AT_BRIDGE" "$ATCMD" | sed "s/${ESC}\\[[0-9;]*m//g" | tr -d '\r'

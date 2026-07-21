@@ -1,4 +1,6 @@
 #!/bin/bash
 
-# Look for the process by its command and kill it so socat can have smd7 instead
-pkill -f "/usr/bin/port_bridge smd7 at_usb2 1"
+# Release smd7 only when the legacy port bridge is present.  A non-match is
+# normal on FM150 and must not make the boot/install service fail.
+pkill -f "/usr/bin/port_bridge smd7 at_usb2 1" 2>/dev/null || true
+exit 0

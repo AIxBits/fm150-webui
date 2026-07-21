@@ -65,8 +65,7 @@ printf '%s\n' "$$" > "$LOCK/pid"
 trap 'rm -f "$LOCK/pid"; rmdir "$LOCK" 2>/dev/null' EXIT
 
 printf '%s\n\n' "$ATCMD"
-# BusyBox timeout differs between FM150 firmware builds; invoking it as
-# "timeout 30 ..." can try to execute a program literally named "30".
-# atcmd11 already waits for the modem's OK/ERROR terminator.
 ESC=$(printf '\033')
-"$AT_BRIDGE" "$ATCMD" | sed "s/${ESC}\\[[0-9;]*m//g" | tr -d '\r'
+# This firmware's BusyBox timeout applet accepts -t SECONDS COMMAND. The
+# five-second watchdog prevents a stuck AT request from holding the lock.
+timeout -t 5 "$AT_BRIDGE" "$ATCMD" | sed "s/${ESC}\\[[0-9;]*m//g" | tr -d '\r'

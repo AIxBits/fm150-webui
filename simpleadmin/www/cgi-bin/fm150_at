@@ -19,7 +19,7 @@ fi
 # Accept AT syntax only.  More importantly, forbid line breaks so one HTTP
 # request cannot inject a second serial command.
 case "$ATCMD" in
-    AT|AT+*|AT\&*) ;;
+    AT|ATI|AT+*|AT\&*) ;;
     *) printf 'ERROR: command must start with AT\n'; exit 1 ;;
 esac
 case "$ATCMD" in

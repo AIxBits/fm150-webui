@@ -60,13 +60,18 @@ install() {
     [ -d "$WEB_ROOT" ] || { echo "ERROR: $WEB_ROOT is absent. Install Simple Admin first." >&2; exit 1; }
 
     mkdir -p "$CGI_ROOT"
-    if [ -f "$INDEX" ] && [ ! -f "${INDEX}.fm150.bak" ]; then
-        cp "$INDEX" "${INDEX}.fm150.bak"
-    fi
+    for page in index.html network.html sms.html deviceinfo.html; do
+        if [ -f "$WEB_ROOT/$page" ] && [ ! -f "$WEB_ROOT/${page}.fm150.bak" ]; then
+            cp "$WEB_ROOT/$page" "$WEB_ROOT/${page}.fm150.bak"
+        fi
+    done
 
     echo 'Downloading FM150 web files...'
     download "$BASE_URL/index.html" "$INDEX"
     download "$BASE_URL/fm150.html" "$WEB_ROOT/fm150.html"
+    download "$BASE_URL/network.html" "$WEB_ROOT/network.html"
+    download "$BASE_URL/sms.html" "$WEB_ROOT/sms.html"
+    download "$BASE_URL/deviceinfo.html" "$WEB_ROOT/deviceinfo.html"
     download "$BASE_URL/cgi-bin/fm150_at" "$CGI_ROOT/fm150_at"
     download "$BASE_URL/cgi-bin/get_atcommand" "$CGI_ROOT/get_atcommand"
     chmod 0755 "$CGI_ROOT/fm150_at" "$CGI_ROOT/get_atcommand"
@@ -78,13 +83,14 @@ install() {
     check
 }
 
-
 uninstall() {
     [ "$(id -u)" = 0 ] || { echo 'ERROR: run as root.' >&2; exit 1; }
     rm -f "$WEB_ROOT/fm150.html" "$CGI_ROOT/fm150_at"
-    if [ -f "${INDEX}.fm150.bak" ]; then
-        mv "${INDEX}.fm150.bak" "$INDEX"
-    fi
+    for page in index.html network.html sms.html deviceinfo.html; do
+        if [ -f "$WEB_ROOT/${page}.fm150.bak" ]; then
+            mv "$WEB_ROOT/${page}.fm150.bak" "$WEB_ROOT/$page"
+        fi
+    done
     restart_web
     echo 'FM150 Web AT overlay removed.'
 }

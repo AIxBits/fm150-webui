@@ -2,8 +2,6 @@
 
 面向 **Fibocom FM150-AE/NA-01** 的独立 Web 管理界面，运行在模组内部。
 
-它不依赖 Quectel WebUI、Simple Admin、Entware/OPKG、lighttpd 或 QMI 工具链。
-
 ## 页面预览
 
 ![FM150 WebUI 首页：网络与服务小区状态](docs/images/fm150-dashboard.png)
